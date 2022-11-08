@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>02561 W2P5</title>
+	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+	<script type="text/javascript" src="../Common/initShaders.js"></script>
+	<script type="text/javascript" src="../Common/MV.js"></script>
+	<script type="text/javascript" src="02561_W02P5.js"></script>
+	
+	<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec4 a_Position;
+		attribute vec4 a_Color;
+		varying vec4 v_Color;
+		void main()
+		{
+			v_Color = a_Color;
+			gl_Position = a_Position;
+			gl_PointSize = 10.0;
+		}
+	</script>
+	
+	<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;
+		varying vec4 v_Color;
+		void main()
+		{
+			gl_FragColor = v_Color;
+		}
+	</script>
+</head>
+<body>
+	<canvas id="gl-canvas" width="512" height="512">Please use a browser that supports WebGL</canvas>
+	
+	<select id="colorMenu" size="9">
+		<option value="0" selected>Black</option>
+		<option value="1">Red</option>
+		<option value="2">Yellow</option>
+		<option value="3">Green</option>
+		<option value="4">Blue</option>
+		<option value="5">Magenta</option>
+		<option value="6">Cyan</option>
+		<option value="7">White</option>
+		<option value="8">Cornflower</option>
+	</select>
+	<select id="clearMenu" size="1">
+		<option value="0">Black</option>
+		<option value="1">Red</option>
+		<option value="2">Yellow</option>
+		<option value="3">Green</option>
+		<option value="4">Blue</option>
+		<option value="5">Magenta</option>
+		<option value="6">Cyan</option>
+		<option value="7">White</option>
+		<option value="8" selected>Cornflower</option>
+	</select><br/>
+	<button id="clearButton">Clear canvas</button>
+	<button id="pointMode">Point drawing mode</button>
+	<button id="triangleMode">Triangle drawing mode</button>
+	<button id="circleMode">Circle drawing mode</button>
+</body>
+</html>

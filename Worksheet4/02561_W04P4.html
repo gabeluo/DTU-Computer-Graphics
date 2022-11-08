@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>02561 W4P4</title>
+	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+	<script type="text/javascript" src="../Common/initShaders.js"></script>
+	<script type="text/javascript" src="../Common/MV.js"></script>
+	<script type="text/javascript" src="02561_W04P4.js"></script>
+	
+	<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec4 a_Position;
+		attribute vec4 a_Color;
+		attribute vec4 a_Normal;
+		uniform mat4 u_View;
+		uniform mat4 u_Perspective;
+
+		uniform float u_diffuseCoefficient;
+		uniform float u_ambientCoefficient;
+		uniform float u_specularCoefficient;
+		uniform float u_shininessCoefficient;
+		uniform vec3 u_lightEmission;
+		uniform vec4 u_lightDirection;
+		uniform vec3 u_cameraPosition;
+		uniform vec3 u_cameraAim;
+		varying vec4 v_Color;
+
+		void main()
+		{
+			vec3 L_rd = u_diffuseCoefficient * a_Color.rgb * u_lightEmission * max(dot(a_Normal.xyz, -1.0 * u_lightDirection.xyz), 0.0);
+			vec3 L_a = u_ambientCoefficient * u_lightEmission;
+			vec3 w_o = normalize(u_cameraPosition - u_cameraAim);
+			vec3 w_h = normalize(-1.0 * u_lightDirection.xyz + w_o);
+			vec3 L_o = L_rd + L_a + u_specularCoefficient * u_lightEmission * pow(max(dot(a_Normal.xyz, w_h), 0.0), u_shininessCoefficient);
+			v_Color.rgb = L_o;
+			v_Color.a = a_Color.a;
+			gl_Position = u_Perspective * u_View * a_Position;
+		}
+	</script>
+	
+	<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;
+		varying vec4 v_Color;
+		void main()
+		{
+			gl_FragColor = v_Color;
+		}
+	</script>
+</head>
+<body>
+	<canvas id="gl-canvas" width="512" height="512">Please use a browser that supports WebGL</canvas>
+	<button id="incrementSubd">Increment Subdivision</button>
+	<button id="decrementSubd">Decrement Subdivision</button>
+	<button id="toggleRotation">Toggle Camera Rotation</button>
+	<div>
+		Emmited radience (L_e): 0.0 <input id="emittedRadience" type="range"
+		min="0.0" max="2.0" step="0.1" value="1.0" />
+		2.0
+	</div>
+	<div>
+		Ambient coefficient (k_a): 0.0<input id="ambientCoefficient" type="range"
+		min="0.0" max="1.0" step="0.1" value="0.5" />
+		1.0
+	</div>
+	<div>
+		Diffuse coefficient (k_d): 0.0 <input id="diffuseCoefficient" type="range"
+		min="0.0" max="1.0" step="0.1" value="0.5" />
+		1.0
+	</div>
+	<div>
+		Specular coefficient (k_s): 0.0 <input id="specularCoefficient" type="range"
+		min="0.0" max="1.0" step="0.1" value="0.5" />
+		1.0
+	</div>
+	<div>
+		Shininess (s): 0.0 <input id="shininessCoefficient" type="range"
+		min="0.0" max="1000.0" step="10.0" value="500.0" />
+		1.0e3
+	</div>
+</body>
+</html>

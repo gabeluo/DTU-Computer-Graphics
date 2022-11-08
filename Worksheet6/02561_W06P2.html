@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>02561 W6P2</title>
+	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+	<script type="text/javascript" src="../Common/initShaders.js"></script>
+	<script type="text/javascript" src="../Common/MV.js"></script>
+	<script type="text/javascript" src="02561_W06P2.js"></script>
+	
+	<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec4 a_Position;
+		attribute vec2 a_TexCoord;
+		uniform mat4 u_Perspective;
+		varying vec2 vTexCoord;
+
+		void main()
+		{
+			gl_Position = u_Perspective * a_Position;
+			vTexCoord = a_TexCoord;
+		}
+	</script>
+	
+	<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;
+		uniform sampler2D texMap;
+		varying vec2 vTexCoord;
+		void main()
+		{
+			gl_FragColor = texture2D(texMap, vTexCoord);
+		}
+	</script>
+</head>
+<body>
+	<canvas id="gl-canvas" width="512" height="512">Please use a browser that supports WebGL</canvas>
+	<div>
+		Texture Wrapping
+		<select id="texWrapMenu" size="1">
+			<option value="0">Clamp to edge</option>
+			<option value="1" selected>Repeat</option>
+		</select>
+	</div>
+
+	<div>
+		Magnification
+		<select id="magMenu" size="1">
+			<option value="0" selected>Nearest</option>
+			<option value="1">Linear</option>
+		</select>
+	</div>
+
+	<div>
+		<div>
+			Minification, Linear Filtering
+			<select id="minfilterMenu" size="1">
+				<option value="0" selected>Nearest</option>
+				<option value="1">Linear</option>
+			</select>
+		</div>
+		<div>
+			Minification, Texture Minimapping
+			<select id="minMipmapMenu" size="1">
+				<option value="0" selected>Nearest Mipmap Nearest</option>
+				<option value="1">Linear Mipmapping Nearest</option>
+				<option value="2">Nearest Mipmap Linear</option>
+				<option value="3">Linear Mipmap Linear</option>
+			</select>
+		</div>
+	</div>
+	<br>
+	<div>
+		Current Minification Technique:
+		<div id = "minMode">Linear Filtering</div>
+		<br>
+		Change Minification Technique
+		<button id="linearFilteringButton">Linear Filtering</button>
+		<button id="mipmapButton">Texture Mipmapping</button>
+	</div>
+
+</body>
+</html>

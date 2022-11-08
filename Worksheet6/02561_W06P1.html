@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>02561 W6P1</title>
+	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+	<script type="text/javascript" src="../Common/initShaders.js"></script>
+	<script type="text/javascript" src="../Common/MV.js"></script>
+	<script type="text/javascript" src="02561_W06P1.js"></script>
+	
+	<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec4 a_Position;
+		attribute vec2 a_TexCoord;
+		uniform mat4 u_Perspective;
+		varying vec2 vTexCoord;
+
+		void main()
+		{
+			gl_Position = u_Perspective * a_Position;
+			vTexCoord = a_TexCoord;
+		}
+	</script>
+	
+	<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;
+		uniform sampler2D texMap;
+		varying vec2 vTexCoord;
+		void main()
+		{
+			gl_FragColor = texture2D(texMap, vTexCoord);
+		}
+	</script>
+</head>
+<body>
+	<canvas id="gl-canvas" width="512" height="512">Please use a browser that supports WebGL</canvas>
+</body>
+</html>

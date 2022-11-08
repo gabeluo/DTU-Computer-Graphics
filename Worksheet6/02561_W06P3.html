@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>02561 W6P3</title>
+	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+	<script type="text/javascript" src="../Common/initShaders.js"></script>
+	<script type="text/javascript" src="../Common/MV.js"></script>
+	<script type="text/javascript" src="02561_W06P3.js"></script>
+	
+	<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec4 a_Position;
+		attribute vec4 a_Color;
+		attribute vec4 a_Normal;
+		uniform mat4 u_View;
+		uniform mat4 u_Perspective;
+		uniform float u_diffuseCoefficient;
+		uniform float u_ambientCoefficient;
+		uniform vec3 u_lightEmission;
+		uniform vec4 u_lightDirection;
+
+		varying vec4 v_Color;
+		varying vec4 v_Normal;
+		varying float v_diffuseCoefficient;
+		varying float v_ambientCoefficient;
+		varying vec3 v_lightEmission;
+		varying vec4 v_lightDirection;
+
+		void main()
+		{
+			v_Color.a = a_Color.a;
+			gl_Position = u_Perspective * u_View * a_Position;
+			v_Normal = a_Normal;
+
+			v_diffuseCoefficient = u_diffuseCoefficient;
+			v_ambientCoefficient = u_ambientCoefficient;
+			v_lightEmission = u_lightEmission;
+			v_lightDirection = u_lightDirection;
+		}
+	</script>
+	
+	<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;
+		varying vec4 v_Color;
+		varying vec4 v_Normal;
+		uniform sampler2D texMap;
+
+		varying float v_diffuseCoefficient;
+		varying float v_ambientCoefficient;
+		varying vec3 v_lightEmission;
+		varying vec4 v_lightDirection;
+
+		void main()
+		{
+			vec2 vTexCoord;
+			vec4 L_rd;
+			L_rd.rgb = v_diffuseCoefficient * v_lightEmission * max( dot(v_Normal.xyz, -1.0 * v_lightDirection.xyz), 0.0) + v_ambientCoefficient * v_lightEmission;
+			L_rd.a = v_Color.a;
+			vec3 L_a = v_ambientCoefficient * v_lightEmission;
+			vTexCoord.x = 0.8 * 3.141592653589793 + 1.0 - atan(v_Normal.z, v_Normal.x)/(2.0 * 3.141592653589793);
+			vTexCoord.y = acos(v_Normal.y)/3.141592653589793;
+			gl_FragColor = L_rd * texture2D(texMap, vTexCoord);
+
+		}
+	</script>
+</head>
+<body>
+	<canvas id="gl-canvas" width="512" height="512">Please use a browser that supports WebGL</canvas>
+	<button id="incrementSubd">Increment Subdivision</button>
+	<button id="decrementSubd">Decrement Subdivision</button>
+	<button id="toggleRotation">Toggle Camera Rotation</button>
+
+	<div>
+		<div>
+			Minification, Linear Filtering
+			<select id="minfilterMenu" size="1">
+				<option value="0" selected>Nearest</option>
+				<option value="1">Linear</option>
+			</select>
+		</div>
+		<div>
+			Minification, Texture Minimapping
+			<select id="minMipmapMenu" size="1">
+				<option value="0" selected>Nearest Mipmap Nearest</option>
+				<option value="1">Linear Mipmapping Nearest</option>
+				<option value="2">Nearest Mipmap Linear</option>
+				<option value="3">Linear Mipmap Linear</option>
+			</select>
+		</div>
+	</div>
+	<br>
+	<div>
+		Current Minification Technique:
+		<div id = "minMode">Texture Mipmapping</div>
+		<br>
+		Change Minification Technique
+		<button id="linearFilteringButton">Linear Filtering</button>
+		<button id="mipmapButton">Texture Mipmapping</button>
+	</div>
+</body>
+</html>
