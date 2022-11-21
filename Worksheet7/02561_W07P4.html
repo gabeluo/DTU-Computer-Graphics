@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>02561 W7P3</title>
+	<title>02561 W7P4</title>
 	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
 	<script type="text/javascript" src="../Common/initShaders.js"></script>
 	<script type="text/javascript" src="../Common/MV.js"></script>
-	<script type="text/javascript" src="02561_W07P3.js"></script>
+	<script type="text/javascript" src="02561_W07P4.js"></script>
 	
 	<script id="vertex-shader" type="x-shader/x-vertex">
 		attribute vec4 a_Position;
@@ -36,6 +36,7 @@
 	<script id="fragment-shader" type="x-shader/x-fragment">
 		precision mediump float;
 		varying vec4 v_TexCoord;
+		uniform sampler2D texNormalMap;
 		uniform samplerCube texMap;
 
 		varying float v_Reflective;
@@ -43,18 +44,34 @@
 		varying vec4 v_Normal;
 		varying vec4 v_Position;
 
+		vec3 rotate_to_normal(vec3 n, vec3 v) {
+			float sgn_nz = sign(n.z + 1.0e-12);
+			float a = -1.0/(1.0 + abs(n.z));
+			float b = n.x*n.y*a;
+			return vec3(1.0 + n.x*n.x*a, b, -sgn_nz*n.x)*v.x
+			+ vec3(sgn_nz*b, sgn_nz*(1.0 + n.y*n.y*a), -n.y)*v.y
+			+ n*v.z;
+		}
+		
 		void main()
 		{
-			vec3 TexCoordFinal = v_TexCoord.xyz;
-
+			vec3 finalTexCoord = v_TexCoord.xyz;
 			if (v_Reflective == 1.0) {
-				vec4 n_Normal = normalize(v_Normal);
-				vec3 i_w = (v_Position.xyz - v_cameraPosition)/length(v_Position.xyz - v_cameraPosition);
-				vec3 r_w = reflect(i_w, n_Normal.xyz);
-				TexCoordFinal = r_w;
-			}
+				vec2 vTexCoord;
+				vTexCoord.x = 1.0 - atan(v_Normal.z, v_Normal.x)/(2.0 * 3.141592653589793);
+				vTexCoord.y = acos(v_Normal.y)/3.141592653589793;
+				vec4 normalMap = texture2D(texNormalMap, vTexCoord);
 
-			gl_FragColor = textureCube(texMap, TexCoordFinal);
+				vec3 tangentNormal = 2.0*normalMap.xyz-vec3(1, 1, 1);
+				vec3 bumpNormal = rotate_to_normal(v_Normal.xyz, tangentNormal);
+
+				vec3 n_Normal = normalize(bumpNormal);
+				vec3 i_w = (v_Position.xyz - v_cameraPosition)/length(v_Position.xyz - v_cameraPosition);
+				vec3 r_w = reflect(i_w, n_Normal);
+
+				finalTexCoord = r_w;
+			}
+			gl_FragColor = textureCube(texMap, finalTexCoord);
 
 		}
 	</script>

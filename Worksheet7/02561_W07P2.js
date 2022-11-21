@@ -40,6 +40,7 @@ window.onload = function init()
 	initTexture(gl);
 
 	gl.vBuffer = null;
+
 	// add vertices for background
 	pointsArray = vertices;
 	// add vertices for sphere
@@ -71,8 +72,9 @@ window.onload = function init()
 	function animate() {
 		if (g_tex_ready >= 6) {
 			render(gl);
+		} else {
+			requestAnimationFrame(animate);
 		}
-		requestAnimationFrame(animate);
 	}
 	animate();
 

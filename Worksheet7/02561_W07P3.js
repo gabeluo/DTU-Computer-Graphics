@@ -3,12 +3,10 @@ var vb = vec4(0.0, 0.942809, -0.333333, 1);
 var vc = vec4(-0.816497, -0.471405, -0.333333, 1);
 var vd = vec4(0.816497, -0.471405, -0.333333, 1);
 
-var vertices = [vec4(-1, -1, 0.999, 1), vec4(1, -1, 0.999, 1),  vec4(-1, 1, 0.999, 1), vec4(-1, -1, 0.999, 1),  vec4(-1, 1, 0.999, 1), vec4(1, 1, 0.999, 1)];
+var vertices = [vec4(-1, -1, 0.999, 1), vec4(1, -1, 0.999, 1),  vec4(1, 1, 0.999, 1), vec4(-1, -1, 0.999, 1),  vec4(1, 1, 0.999, 1), vec4(-1, 1, 0.999, 1)];
+var placeholderVertices = [vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), vec4(0, 0, 0, 0)];
 var pointsArray = [];
 var normalsArray = [];
-
-var linearFiltering = false;
-var mipmap = true;
 
 var g_tex_ready = 0;
 
@@ -17,24 +15,19 @@ window.onload = function init()
 	var canvas = document.getElementById("gl-canvas");
 	var gl = WebGLUtils.setupWebGL(canvas);
 	gl.clearColor(0.3921, 0.5843, 0.9294, 1.0);
-	numSubdivs = 4;
+	numSubdivs = 5;
 	
-	cameraPosition = vec3(0.0, 0.0, 3);
+	rotate = true;
+	var cameraPosition;
+	var cameraAlpha = 0;
+	var cameraRadius = 3;
 	var V;
+	var P = perspective(90, 1, 0.1, 100);
+	var Perspective_inv;
+	var View_inv;
 	var Mtex;
 
-	var P = perspective(45, 1, 0.1, 100);
-
-	var lightEmissionVec = vec3(1.0, 1.0, 1.0);
-	var lightDirectionVec = vec4(0.0, 0.0, -1.0, 0.0);
-	var diffusionCoefficientValue = 0.9;
-	var ambientCoefficient = 0.9;
-
-	var cameraRadius = 3;
-	var cameraAlpha = 0;
-	var rotate = true;
-
-	var reflect = 1.0;
+	var reflective = 1.0;
 
 	gl.enable(gl.DEPTH_TEST);
 	gl.enable(gl.CULL_FACE);
@@ -45,94 +38,90 @@ window.onload = function init()
 	initTexture(gl);
 
 	gl.vBuffer = null;
+
+	// add vertices for background
+	pointsArray = vertices;
+	normalsArray = placeholderVertices;
+	// add vertices for sphere
 	initSphere(gl, numSubdivs);
 	
 	var viewMatrix = gl.getUniformLocation(gl.program,"u_View");
 
 	var perspectiveMatrix = gl.getUniformLocation(gl.program,"u_Perspective");
-	gl.uniformMatrix4fv(perspectiveMatrix, false, flatten(P));
 
 	var textureMatrix = gl.getUniformLocation(gl.program,"u_TextureMatrix");
-
-	var lightEmission = gl.getUniformLocation(gl.program,"u_lightEmission");
-	gl.uniform3fv(lightEmission, flatten(lightEmissionVec));
-
-	var lightDirection = gl.getUniformLocation(gl.program,"u_lightDirection");
-	gl.uniform4fv(lightDirection, flatten(lightDirectionVec));
-
+	
 	var cameraPositionLoc = gl.getUniformLocation(gl.program,"u_cameraPosition");
 
-	var diffusionCoefficient = gl.getUniformLocation(gl.program,"u_diffuseCoefficient");
-	gl.uniform1f(diffusionCoefficient, diffusionCoefficientValue);
-	var ambientCoefficientLoc = gl.getUniformLocation(gl.program,"u_ambientCoefficient");
-	gl.uniform1f(ambientCoefficientLoc, ambientCoefficient);
-
 	var reflectiveLoc = gl.getUniformLocation(gl.program,"u_Reflective");
-	gl.uniform1f(reflectiveLoc, reflect);
 	
 	incrementSubd.addEventListener("click", function (ev) {
 		numSubdivs++;
-		pointsArray = [];
-		normalsArray = [];
+		pointsArray = vertices;
+		normalsArray = placeholderVertices;
 		initSphere(gl, numSubdivs);
-		render(gl);
 	});
 	decrementSubd.addEventListener("click", function (ev) {
 		if (numSubdivs) {
 			numSubdivs--;
-			pointsArray = [];
-			normalsArray = [];
+			pointsArray = vertices;
+			normalsArray = placeholderVertices;
 			initSphere(gl, numSubdivs);
-			render(gl);
 		}
 	});
 	toggleRotation.addEventListener("click", function (ev) {
 		rotate = !rotate;
 	});
-	document.getElementById("minfilterMenu").oninput = function () {
-		if (linearFiltering) {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST + minfilterMenu.selectedIndex);
-		}
-	};
-
-	document.getElementById("minMipmapMenu").oninput = function () {
-		if (mipmap) {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST + minMipmapMenu.selectedIndex);
-		}
-	};
-
-	linearFilteringButton.addEventListener("click", function (ev) {
-		if (!linearFiltering) {
-			linearFiltering = true;
-			mipmap = false;
-			document.getElementById("minMode").innerHTML = "Linear Filtering";
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST + minfilterMenu.selectedIndex);
-		}
-	});
-
-	mipmapButton.addEventListener("click", function (ev) {
-		if (!mipmap) {
-			linearFiltering = false;
-			mipmap = true;
-			document.getElementById("minMode").innerHTML = "Texture Mipmapping";
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST + minMipmapMenu.selectedIndex);
-		}
-	});
 
 	function animate() {
 		if (g_tex_ready >= 6) {
-			cameraPosition = vec3(cameraRadius*Math.sin(cameraAlpha), 0, cameraRadius*Math.cos(cameraAlpha));
-			//if (rotate)
-				//cameraAlpha += 0.02;
-			V = lookAt(cameraPosition, vec3(0, 0, 0), vec3(0, 1, 0));
-			gl.uniformMatrix4fv(viewMatrix, false, flatten(V));
-			gl.uniform3fv(cameraPositionLoc, flatten(cameraPosition));
-
 			render(gl);
 		}
 		requestAnimationFrame(animate);
 	}
 	animate();
+
+	function render(gl) {
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+		cameraPosition = vec3(cameraRadius*Math.sin(cameraAlpha), 0, cameraRadius*Math.cos(cameraAlpha));
+		gl.uniform3fv(cameraPositionLoc, flatten(cameraPosition));
+		if (rotate)
+			cameraAlpha += 0.01;
+		V = lookAt(cameraPosition, vec3(0, 0, 0), vec3(0, 1, 0));
+
+		Perspective_inv = inverse(P);
+		View_inv = inverse(V);
+		View_inv[3][0] = 0;
+		View_inv[3][1] = 0;
+		View_inv[3][2] = 0;
+		View_inv[3][3] = 0;
+		View_inv[0][3] = 0;
+		View_inv[1][3] = 0;
+		View_inv[2][3] = 0;
+		Mtex = mult(View_inv,Perspective_inv);
+
+		// draw background
+		gl.uniformMatrix4fv(viewMatrix, false, flatten(mat4()));
+		gl.uniformMatrix4fv(perspectiveMatrix, false, flatten(mat4()));
+		gl.uniformMatrix4fv(textureMatrix, false, flatten(Mtex));
+
+		reflective = 0.0;
+		gl.uniform1f(reflectiveLoc, reflective);
+
+		gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+		// draw sphere
+		gl.uniformMatrix4fv(viewMatrix, false, flatten(V));
+		gl.uniformMatrix4fv(perspectiveMatrix, false, flatten(P));
+		gl.uniformMatrix4fv(textureMatrix, false, flatten(mat4()));
+
+		reflective = 1.0;
+		gl.uniform1f(reflectiveLoc, reflective);
+		console.log(pointsArray.length);
+
+		gl.drawArrays(gl.TRIANGLES, 6, pointsArray.length-6);
+	}
 }
 
 function initTexture(gl)
@@ -165,16 +154,8 @@ function initTexture(gl)
 	gl.uniform1i(gl.getUniformLocation(gl.program, "texMap"), 0);
 }
 
-function render(gl) {
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	for(var i=0; i<pointsArray.length; i+=3)
-		gl.drawArrays(gl.TRIANGLES, i, 3);
-}
-
 function initSphere(gl, numSubdivs) {
 	tetrahedron(va, vb, vc, vd, numSubdivs);
-	pointsArray.push(vertices);
 	gl.deleteBuffer(gl.vBuffer);
 	gl.vBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, gl.vBuffer);
@@ -184,17 +165,17 @@ function initSphere(gl, numSubdivs) {
 	gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
 	gl.enableVertexAttribArray(vPosition);
 
-	var colors = []
-	for (var i=0; i<pointsArray.length; i++) {
-		colors[i] = vec4(0.5*pointsArray[i][0]+0.5, 0.5*pointsArray[i][1]+0.5, 0.5*pointsArray[i][2]+0.5, 0.5*pointsArray[i][3]+0.5);
-	}
-	var colorbuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, colorbuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+	// var colors = []
+	// for (var i=0; i<pointsArray.length; i++) {
+	// 	colors[i] = vec4(0.5*pointsArray[i][0]+0.5, 0.5*pointsArray[i][1]+0.5, 0.5*pointsArray[i][2]+0.5, 0.5*pointsArray[i][3]+0.5);
+	// }
+	// var colorbuffer = gl.createBuffer();
+	// gl.bindBuffer(gl.ARRAY_BUFFER, colorbuffer);
+	// gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
 	
-	var vColor = gl.getAttribLocation(gl.program, "a_Color");
-	gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(vColor);
+	// var vColor = gl.getAttribLocation(gl.program, "a_Color");
+	// gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+	// gl.enableVertexAttribArray(vColor);
 
 	var nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer);
