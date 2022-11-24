@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>02561 W8P1</title>
+	<title>02561 W8P3</title>
 	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
 	<script type="text/javascript" src="../Common/initShaders.js"></script>
 	<script type="text/javascript" src="../Common/MV.js"></script>
-	<script type="text/javascript" src="02561_W08P1.js"></script>
+	<script type="text/javascript" src="02561_W08P3.js"></script>
 	
 	<script id="vertex-shader" type="x-shader/x-vertex">
 		attribute vec4 a_Position;
@@ -24,14 +24,17 @@
 	<script id="fragment-shader" type="x-shader/x-fragment">
 		precision mediump float;
 		uniform sampler2D texMap;
+		uniform float u_Visibility;
 		varying vec2 vTexCoord;
 		void main()
 		{
-			gl_FragColor = texture2D(texMap, vTexCoord);
+			gl_FragColor = u_Visibility * texture2D(texMap, vTexCoord);
+			gl_FragColor.w = 1.0;
 		}
 	</script>
 </head>
 <body>
 	<canvas id="gl-canvas" width="512" height="512">Please use a browser that supports WebGL</canvas>
+	<button id="toggleRotation">Toggle Light Rotation</button>
 </body>
 </html>

@@ -1,17 +1,31 @@
-var imageLoaded = false;
-
 window.onload = function init()
 {
 	var canvas = document.getElementById("gl-canvas");
-	var gl = WebGLUtils.setupWebGL(canvas);
+	var gl = WebGLUtils.setupWebGL(canvas, { alpha: false });
+
+	gl.enable(gl.DEPTH_TEST);
+	gl.enable(gl.BLEND)
 
 	gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
+	var imageLoaded = false;
+	var rotate = true;
+
 	var P = perspective(90, 1, 0.1, 100);
 	var V = lookAt(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 1, 0));
+	var modelViewMatrix = mat4();
+	var Ms = mat4();
+
+	var visibility = 1;
 
 	program = initShaders(gl, "vertex-shader", "fragment-shader");
 	gl.useProgram(program);
+
+	var lightRadius = 2;
+	var lightAlpha = 0;
+	var lightPos = vec4(lightRadius*Math.sin(lightAlpha), 2, lightRadius*Math.cos(lightAlpha)-2, 1);
+	Ms[3][3] = 0.0;
+	Ms[3][1] = -1.0/(lightPos[1]+1+0.001);
 
 	// marble background rectangle
 	var vertices = [vec3(-2, -1, -1), vec3(2, -1, -1), vec3(2, -1, -5), vec3(-2, -1, -1), vec3(2, -1, -5), vec3(-2, -1, -5)];
@@ -29,7 +43,7 @@ window.onload = function init()
 	gl.enableVertexAttribArray(vPosition);
 
 	// texture coordinates
-	var texCoord = [vec2(0.0, 0.0), vec2(1.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 1.0), vec2(0.0, 0.0), vec2(1.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 1.0), vec2(0.0, 0.0), vec2(1.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 1.0)];
+	var texCoord = [vec2(0.0, 0.0), vec2(1.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 0.0), vec2(1.0, 1.0), vec2(0.0, 1.0)];
 	var tBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, flatten(texCoord), gl.STATIC_DRAW);
@@ -72,27 +86,57 @@ window.onload = function init()
 	gl.uniformMatrix4fv(perspectiveMatrix, false, flatten(P));
 
 	var viewMatrix = gl.getUniformLocation(program,"u_View");
-	gl.uniformMatrix4fv(viewMatrix, false, flatten(V));
+
+	var visibilityLoc = gl.getUniformLocation(program,"u_Visibility");
+
+	toggleRotation.addEventListener("click", function (ev) {
+		rotate = !rotate;
+	});
 
 	function tick() {
 		render(gl);
-		if (!imageLoaded)
-			requestAnimationFrame(tick);
+		requestAnimationFrame(tick);
 	}
 	
 	tick();
-}
 
-function render(gl) {
-	if (imageLoaded) {
-		gl.clear(gl.COLOR_BUFFER_BIT);
-		// draw background
-		gl.uniform1i(gl.getUniformLocation(program, "texMap"), 0);
-		gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-		// draw the two rectangles
-		// note that the same texture coordinates as the background are used for simplicity and since it won't make any visual difference
-		gl.uniform1i(gl.getUniformLocation(program, "texMap"), 1);
-		gl.drawArrays(gl.TRIANGLES, 6, 12);
+	function render(gl) {
+		if (imageLoaded) {
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	
+			// draw background
+			gl.depthFunc(gl.LESS);
+			modelViewMatrix = V;
+			visibility = 1.0;
+			gl.uniform1f(visibilityLoc, visibility);
+			gl.uniformMatrix4fv(viewMatrix, false, flatten(modelViewMatrix));
+			gl.uniform1i(gl.getUniformLocation(program, "texMap"), 0);
+			gl.drawArrays(gl.TRIANGLES, 0, 6);
+	
+			// draw shadows
+			gl.depthFunc(gl.GREATER);
+			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+			lightPos = vec4(lightRadius*Math.sin(lightAlpha), 2, lightRadius*Math.cos(lightAlpha)-2, 1);
+			if (rotate)
+				lightAlpha += 0.02;
+			
+			modelViewMatrix = mult(modelViewMatrix, translate(lightPos[0], lightPos[1], lightPos[2]));
+			modelViewMatrix = mult(modelViewMatrix, Ms);
+			modelViewMatrix = mult(modelViewMatrix, translate(-lightPos[0],-lightPos[1], -lightPos[2]));
+			visibility = 0.6;
+			
+			gl.uniform1f(visibilityLoc, visibility);
+			gl.uniformMatrix4fv(viewMatrix, false, flatten(modelViewMatrix));
+			gl.uniform1i(gl.getUniformLocation(program, "texMap"), 1);
+			gl.drawArrays(gl.TRIANGLES, 6, 12);
+	
+			// draw the two rectangles
+			gl.depthFunc(gl.LESS);
+			modelViewMatrix = V;
+			visibility = 1.0;
+			gl.uniform1f(visibilityLoc, visibility);
+			gl.uniformMatrix4fv(viewMatrix, false, flatten(modelViewMatrix));
+			gl.drawArrays(gl.TRIANGLES, 6, 12);
+		}
 	}
 }
