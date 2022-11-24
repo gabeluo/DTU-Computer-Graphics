@@ -14,6 +14,8 @@ window.onload = function init()
 	gl.program = initShaders(gl, "vertex-shader", "fragment-shader");
 	gl.useProgram(gl.program);
 
+	var rotate = true;
+
 	var model = initObject(gl, "./BatarangArkham.obj", 0.01);
 
 	var P = perspective(45, 1, 0.1, 100);
@@ -38,13 +40,18 @@ window.onload = function init()
 	
 	function tick() {
 		var cameraPosition = vec3(cameraRadius*Math.sin(cameraAlpha), 0, cameraRadius*Math.cos(cameraAlpha));
-		cameraAlpha += 0.04;
+		if (rotate)
+			cameraAlpha += 0.04;
 		V = lookAt(cameraPosition, vec3(0, 0, 0), vec3(0, 1, 0));
 		gl.uniformMatrix4fv(viewMatrix, false, flatten(V));
 		render(gl, model);
 		requestAnimationFrame(tick);
 	}
 	tick();
+
+	toggleRotation.addEventListener("click", function (ev) {
+		rotate = !rotate;
+	});
 }
 
 function render(gl, model)
