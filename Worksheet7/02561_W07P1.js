@@ -14,10 +14,12 @@ window.onload = function init()
 	var gl = WebGLUtils.setupWebGL(canvas);
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	numSubdivs = 5;
+	var rotate = true;
 	
-	var cameraPosition = vec3(0.0, 0.0, 2);
-	var V = lookAt(cameraPosition, vec3(0, 0, 0), vec3(0, 1, 0));
-
+	var cameraPosition;
+	var cameraAlpha = 0;
+	var cameraRadius = 2;
+	var V;
 	var P = perspective(90, 1, 0.1, 100);
 
 	gl.enable(gl.DEPTH_TEST);
@@ -32,7 +34,6 @@ window.onload = function init()
 	initSphere(gl, numSubdivs);
 	
 	var viewMatrix = gl.getUniformLocation(gl.program,"u_View");
-	gl.uniformMatrix4fv(viewMatrix, false, flatten(V));
 
 	var perspectiveMatrix = gl.getUniformLocation(gl.program,"u_Perspective");
 	gl.uniformMatrix4fv(perspectiveMatrix, false, flatten(P));
@@ -54,15 +55,29 @@ window.onload = function init()
 			render(gl);
 		}
 	});
+	toggleRotation.addEventListener("click", function (ev) {
+		rotate = !rotate;
+	});
 
 	function animate() {
-		if (g_tex_ready >= 6) {
+		if (g_tex_ready >= 6)
 			render(gl);
-		} else {
-			requestAnimationFrame(animate);
-		}
+		requestAnimationFrame(animate);
 	}
 	animate();
+
+	function render(gl) {
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	
+		cameraPosition = vec3(cameraRadius*Math.sin(cameraAlpha), 0, cameraRadius*Math.cos(cameraAlpha));
+		V = lookAt(cameraPosition, vec3(0, 0, 0), vec3(0, 1, 0));
+	
+		gl.uniformMatrix4fv(viewMatrix, false, flatten(V));
+		gl.drawArrays(gl.TRIANGLES, 0, pointsArray.length);
+	
+		if (rotate)
+		cameraAlpha += 0.01;
+	}
 }
 
 function initTexture(gl)
@@ -93,12 +108,6 @@ function initTexture(gl)
 		image.src = cubemap[i];
 	}
 	gl.uniform1i(gl.getUniformLocation(gl.program, "texMap"), 0);
-}
-
-function render(gl) {
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	gl.drawArrays(gl.TRIANGLES, 0, pointsArray.length);
-	console.log("render");
 }
 
 function initSphere(gl, numSubdivs) {

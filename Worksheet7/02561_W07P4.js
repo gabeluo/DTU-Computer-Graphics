@@ -63,8 +63,8 @@ window.onload = function init()
 	gl.vBuffer = null;
 
 	// add vertices for background
-	pointsArray = vertices;
-	normalsArray = placeholderVertices;
+	pointsArray = pointsArray.concat(vertices);
+	normalsArray = normalsArray.concat(placeholderVertices);
 	// add vertices for sphere
 	initSphere(gl, numSubdivs);
 	
@@ -80,16 +80,20 @@ window.onload = function init()
 	
 	incrementSubd.addEventListener("click", function (ev) {
 		numSubdivs++;
-		pointsArray = vertices;
-		normalsArray = placeholderVertices;
+		pointsArray = [];
+		normalsArray = [];
+		pointsArray = pointsArray.concat(vertices);
+		normalsArray = normalsArray.concat(placeholderVertices);
 		initSphere(gl, numSubdivs);
 		render(gl);
 	});
 	decrementSubd.addEventListener("click", function (ev) {
 		if (numSubdivs) {
 			numSubdivs--;
-			pointsArray = vertices;
-			normalsArray = placeholderVertices;
+			pointsArray = [];
+			normalsArray = [];
+			pointsArray = pointsArray.concat(vertices);
+			normalsArray = normalsArray.concat(placeholderVertices);
 			initSphere(gl, numSubdivs);
 			render(gl);
 		}

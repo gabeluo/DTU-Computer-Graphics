@@ -40,8 +40,8 @@ window.onload = function init()
 	gl.vBuffer = null;
 
 	// add vertices for background
-	pointsArray = vertices;
-	normalsArray = placeholderVertices;
+	pointsArray = pointsArray.concat(vertices);
+	normalsArray = normalsArray.concat(placeholderVertices);
 	// add vertices for sphere
 	initSphere(gl, numSubdivs);
 	
@@ -57,15 +57,19 @@ window.onload = function init()
 	
 	incrementSubd.addEventListener("click", function (ev) {
 		numSubdivs++;
-		pointsArray = vertices;
-		normalsArray = placeholderVertices;
+		pointsArray = [];
+		normalsArray = [];
+		pointsArray = pointsArray.concat(vertices);
+		normalsArray = normalsArray.concat(placeholderVertices);
 		initSphere(gl, numSubdivs);
 	});
 	decrementSubd.addEventListener("click", function (ev) {
 		if (numSubdivs) {
 			numSubdivs--;
-			pointsArray = vertices;
-			normalsArray = placeholderVertices;
+			pointsArray = [];
+			normalsArray = [];
+			pointsArray = pointsArray.concat(vertices);
+			normalsArray = normalsArray.concat(placeholderVertices);
 			initSphere(gl, numSubdivs);
 		}
 	});
@@ -118,7 +122,6 @@ window.onload = function init()
 
 		reflective = 1.0;
 		gl.uniform1f(reflectiveLoc, reflective);
-		console.log(pointsArray.length);
 
 		gl.drawArrays(gl.TRIANGLES, 6, pointsArray.length-6);
 	}

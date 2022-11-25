@@ -15,21 +15,16 @@ window.onload = function init()
 	var gl = WebGLUtils.setupWebGL(canvas);
 	gl.clearColor(0.3921, 0.5843, 0.9294, 1.0);
 	numSubdivs = 5;
+	var rotate = true;
 	
-	cameraPosition = vec3(0.0, 0.0, 3.0);
-	var V = lookAt(cameraPosition, vec3(0, 0, 0), vec3(0, 1, 0));
+	var cameraPosition;
+	var cameraAlpha = 0;
+	var cameraRadius = 3;
+	var V;
 	var P = perspective(90, 1, 0.1, 100);
-
-	var Perspective_inv = inverse(P);
-	var View_inv = inverse(V);
-	View_inv[3][0] = 0;
-	View_inv[3][1] = 0;
-	View_inv[3][2] = 0;
-	View_inv[3][3] = 0;
-	View_inv[0][3] = 0;
-	View_inv[1][3] = 0;
-	View_inv[2][3] = 0;
-	var Mtex = mult(View_inv,Perspective_inv);
+	var Perspective_inv;
+	var View_inv;
+	var Mtex;
 
 	gl.enable(gl.DEPTH_TEST);
 	gl.enable(gl.CULL_FACE);
@@ -42,7 +37,7 @@ window.onload = function init()
 	gl.vBuffer = null;
 
 	// add vertices for background
-	pointsArray = vertices;
+	pointsArray = pointsArray.concat(vertices);
 	// add vertices for sphere
 	initSphere(gl, numSubdivs);
 	
@@ -55,31 +50,45 @@ window.onload = function init()
 	incrementSubd.addEventListener("click", function (ev) {
 		numSubdivs++;
 		pointsArray = [];
-		normalsArray = [];
+		pointsArray = pointsArray.concat(vertices);
 		initSphere(gl, numSubdivs);
-		render(gl);
 	});
 	decrementSubd.addEventListener("click", function (ev) {
 		if (numSubdivs) {
 			numSubdivs--;
 			pointsArray = [];
-			normalsArray = [];
+			pointsArray = pointsArray.concat(vertices);
 			initSphere(gl, numSubdivs);
-			render(gl);
 		}
+	});
+	toggleRotation.addEventListener("click", function (ev) {
+		rotate = !rotate;
 	});
 
 	function animate() {
-		if (g_tex_ready >= 6) {
+		if (g_tex_ready >= 6)
 			render(gl);
-		} else {
-			requestAnimationFrame(animate);
-		}
+		requestAnimationFrame(animate);
 	}
+
 	animate();
 
 	function render(gl) {
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+		cameraPosition = vec3(cameraRadius*Math.sin(cameraAlpha), 0, cameraRadius*Math.cos(cameraAlpha));
+		V = lookAt(cameraPosition, vec3(0, 0, 0), vec3(0, 1, 0));
+
+		Perspective_inv = inverse(P);
+		View_inv = inverse(V);
+		View_inv[3][0] = 0;
+		View_inv[3][1] = 0;
+		View_inv[3][2] = 0;
+		View_inv[3][3] = 0;
+		View_inv[0][3] = 0;
+		View_inv[1][3] = 0;
+		View_inv[2][3] = 0;
+		Mtex = mult(View_inv,Perspective_inv);
 
 		// draw background
 		gl.uniformMatrix4fv(viewMatrix, false, flatten(mat4()));
@@ -92,6 +101,9 @@ window.onload = function init()
 		gl.uniformMatrix4fv(perspectiveMatrix, false, flatten(P));
 		gl.uniformMatrix4fv(textureMatrix, false, flatten(mat4()));
 		gl.drawArrays(gl.TRIANGLES, 6, pointsArray.length-6);
+
+		if (rotate)
+			cameraAlpha += 0.01;
 	}
 }
 
