@@ -18,9 +18,9 @@ window.onload = function init()
 	var movingUp = true;
 
 	var P = perspective(60, 1, 0.1, 100);
-	var eyePos = vec3(0.0, 0.0, 0.0);
+	var eyePos = vec3(0.0, 2.0, 0.0);
 	var eyeUp = vec3(0.0, 1.0, 0.0);
-	var eyeAt = vec3(0.0, 0.0, 0.0);
+	var eyeAt = vec3(0.0, -1.0, -2.0)
 	var V = lookAt(eyePos, eyeAt, eyeUp);
 	var viewMatrix = mat4();
 	var modelMatrix = mat4();
@@ -44,7 +44,7 @@ window.onload = function init()
 
 	var lightIntensity = vec3(1.0, 1.0, 1.0);
 	var diffusionCoefficient = 0.5;
-	var ambientCoefficient = 0.5;
+	var ambientCoefficient = 0.2;
 	var specularCoefficient = 0.5;
 	var shininessCoefficient = 500.0;
 
@@ -55,7 +55,6 @@ window.onload = function init()
 	gl.uniform3fv(cameraAimLoc, flatten(eyeAt));
 
 	var teapotLightPositionLoc = gl.getUniformLocation(teapotProgram,"u_lightPosition");
-
 	var teapotLightIntensityLoc = gl.getUniformLocation(teapotProgram,"u_lightIntensity");
 	var teapotDiffusionCoefficientLoc = gl.getUniformLocation(teapotProgram,"u_diffuseCoefficient");
 	var teapotAmbientCoefficientLoc = gl.getUniformLocation(teapotProgram,"u_ambientCoefficient");
@@ -64,9 +63,9 @@ window.onload = function init()
 
 	var teapotPerspectiveMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Perspective");
 	gl.uniformMatrix4fv(teapotPerspectiveMatrixLoc, false, flatten(P));
-
 	var teapotViewMatrixLoc = gl.getUniformLocation(teapotProgram,"u_View");
 	var teapotModelMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Model");
+	var teapotNormalMatrixLoc = gl.getUniformLocation(teapotProgram,"u_NormalMatrix");
 	var teapotVisibilityLoc = gl.getUniformLocation(teapotProgram,"u_Visibility");
 
 	gl.useProgram(tableProgram);
@@ -119,13 +118,6 @@ window.onload = function init()
 	};
 	image.src = 'xamp23.png';
 
-	// // create red texture
-	// gl.activeTexture(gl.TEXTURE1);
-	// var textureRed = gl.createTexture();
-	// gl.bindTexture(gl.TEXTURE_2D, textureRed);
-	// gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 0]));
-	// gl.uniform1i(gl.getUniformLocation(gl.program, "texMap"), 1);
-
 	var tablePerspectiveMatrixLoc = gl.getUniformLocation(tableProgram,"u_Perspective");
 	gl.uniformMatrix4fv(tablePerspectiveMatrixLoc, false, flatten(P));
 
@@ -170,9 +162,10 @@ window.onload = function init()
 			if (!g_drawingInfo) return;
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
+			lightPos = vec4(lightRadius*Math.sin(lightAlpha), 2, lightRadius*Math.cos(lightAlpha)-2, 1);
+
 			// draw background
 			gl.useProgram(tableProgram);
-			// USE THE SPECIFIC PROGRAM NAMES TO NOT CONFUSE YOURSELF
 			initAttributeVariable(gl, tableProgram.a_Position, positionbuffer);
 			initAttributeVariable(gl, tableProgram.a_TexCoord, tBuffer);
 			gl.depthFunc(gl.LESS);
@@ -194,16 +187,30 @@ window.onload = function init()
 			viewMatrix = mult(viewMatrix, Ms);
 			viewMatrix = mult(viewMatrix, translate(-lightPos[0],-lightPos[1], -lightPos[2]));
 			visibility = 0.0;
-			modelMatrix = translate(vec3(0, teapotHeight, -3));
-			
+			modelMatrix = translate(vec3(0.0, teapotHeight, -3));
+			var N = normalMatrix(modelMatrix, true);
 			gl.uniform4fv(teapotLightPositionLoc, flatten(lightPos));
+			gl.uniform3fv(teapotLightIntensityLoc, flatten(lightIntensity));
+			gl.uniform1f(teapotAmbientCoefficientLoc, ambientCoefficient);
+			gl.uniform1f(teapotDiffusionCoefficientLoc, diffusionCoefficient);
+			gl.uniform1f(teapotSpecularCoefficientLoc, specularCoefficient);
+			gl.uniform1f(teapotShininessCoefficientLoc, shininessCoefficient);
+			
 			gl.uniform1f(teapotVisibilityLoc, visibility);
 			gl.uniformMatrix4fv(teapotModelMatrixLoc, false, flatten(modelMatrix));
+			gl.uniformMatrix3fv(teapotNormalMatrixLoc, false, flatten(N));
 			gl.uniformMatrix4fv(teapotViewMatrixLoc, false, flatten(viewMatrix));
-			gl.uniform1i(gl.getUniformLocation(teapotProgram, "texMap"), 1);
+			gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
+	
+			// draw the teapot
+			gl.depthFunc(gl.LESS);
+			viewMatrix = V;
+			visibility = 1.0;
+			gl.uniform1f(teapotVisibilityLoc, visibility);
+			gl.uniformMatrix4fv(teapotViewMatrixLoc, false, flatten(viewMatrix));
 			gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
 
-			lightPos = vec4(lightRadius*Math.sin(lightAlpha), 2, lightRadius*Math.cos(lightAlpha)-2, 1);
+			// movement
 			if (rotate)
 				lightAlpha += 0.02;
 
@@ -218,20 +225,6 @@ window.onload = function init()
 					teapotHeight -= 0.02;
 			}
 
-	
-			// draw the teapot
-			gl.depthFunc(gl.LESS);
-			viewMatrix = V;
-			visibility = 1.0;
-			gl.uniform3fv(teapotLightIntensityLoc, flatten(lightIntensity));
-			gl.uniform1f(teapotAmbientCoefficientLoc, ambientCoefficient);
-			gl.uniform1f(teapotDiffusionCoefficientLoc, diffusionCoefficient);
-			gl.uniform1f(teapotSpecularCoefficientLoc, specularCoefficient);
-			gl.uniform1f(teapotShininessCoefficientLoc, shininessCoefficient);
-			gl.uniform1f(teapotVisibilityLoc, visibility);
-			gl.uniformMatrix4fv(teapotModelMatrixLoc, false, flatten(modelMatrix));
-			gl.uniformMatrix4fv(teapotViewMatrixLoc, false, flatten(viewMatrix));
-			gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
 		}
 	}
 }
