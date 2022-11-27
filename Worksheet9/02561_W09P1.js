@@ -44,7 +44,7 @@ window.onload = function init()
 
 	var lightIntensity = vec3(1.0, 1.0, 1.0);
 	var diffusionCoefficient = 0.5;
-	var ambientCoefficient = 0.2;
+	var ambientCoefficient = 0.1;
 	var specularCoefficient = 0.5;
 	var shininessCoefficient = 500.0;
 

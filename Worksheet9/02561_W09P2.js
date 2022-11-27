@@ -1,6 +1,5 @@
 var g_objDoc = null; // The information of OBJ file
 var g_drawingInfo = null; // The information for drawing 3D model
-var shadow_g_objDoc = null; // The information of OBJ file
 var shadow_g_drawingInfo = null; // The information for drawing 3D model
 var teapotProgram = null;
 
@@ -42,7 +41,6 @@ window.onload = function init()
 	var shadowViewMatrixLoc = gl.getUniformLocation(shadowProgram,"u_View");
 	var shadowModelMatrixLoc = gl.getUniformLocation(shadowProgram,"u_Model");
 
-
 	// teapot
 	gl.useProgram(teapotProgram);
 	var model = initObject(gl, "./teapot/teapot.obj", 0.25, teapotProgram);
@@ -60,19 +58,13 @@ window.onload = function init()
 	var shininessCoefficient = 500.0;
 
 	var cameraPositionLoc = gl.getUniformLocation(teapotProgram,"u_cameraPosition");
-	//gl.uniform3fv(cameraPositionLoc, flatten(eyePos));
-
 	var cameraAimLoc = gl.getUniformLocation(teapotProgram,"u_cameraAim");
-	//gl.uniform3fv(cameraAimLoc, flatten(eyeAt));
-
 	var teapotLightPositionLoc = gl.getUniformLocation(teapotProgram,"u_lightPosition");
-
 	var teapotLightIntensityLoc = gl.getUniformLocation(teapotProgram,"u_lightIntensity");
 	var teapotDiffusionCoefficientLoc = gl.getUniformLocation(teapotProgram,"u_diffuseCoefficient");
 	var teapotAmbientCoefficientLoc = gl.getUniformLocation(teapotProgram,"u_ambientCoefficient");
 	var teapotSpecularCoefficientLoc = gl.getUniformLocation(teapotProgram,"u_specularCoefficient");
 	var teapotShininessCoefficientLoc = gl.getUniformLocation(teapotProgram,"u_shininessCoefficient");
-
 	var teapotPerspectiveMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Perspective");
 	var teapotNormalMatrixLoc = gl.getUniformLocation(teapotProgram,"u_NormalMatrix");
 	var teapotViewMatrixLoc = gl.getUniformLocation(teapotProgram,"u_View");
@@ -216,7 +208,8 @@ window.onload = function init()
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-			// draw background
+			// draw objects normally
+			// draw ground
 			gl.useProgram(tableProgram);
 			initAttributeVariable(gl, tableProgram.a_Position, positionbuffer);
 			initAttributeVariable(gl, tableProgram.a_TexCoord, tBuffer);

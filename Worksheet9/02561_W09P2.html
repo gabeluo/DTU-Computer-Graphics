@@ -132,7 +132,7 @@
 			const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
 			return dot(rgbaDepth, bitShift);
 		}
-		
+
 		void main()
 		{
 			vec3 shadowCoord = (v_PositionFromLight.xyz/v_PositionFromLight.w)/2.0 + 0.5;
@@ -160,8 +160,8 @@
 	<button id="toggleMovement">Toggle Teapot Movement</button>
 	<div>
 		Emmited radience (L_e): 0.0 <input id="emittedRadience" type="range"
-		min="0.0" max="2.0" step="0.1" value="1.0" />
-		2.0
+		min="0.0" max="1.0" step="0.1" value="1.0" />
+		1.0
 	</div>
 	<div>
 		Ambient coefficient (k_a): 0.0<input id="ambientCoefficient" type="range"
