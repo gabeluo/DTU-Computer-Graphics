@@ -4,7 +4,7 @@ window.onload = function init()
 	var gl = WebGLUtils.setupWebGL(canvas, { alpha: false });
 
 	gl.enable(gl.DEPTH_TEST);
-	gl.enable(gl.BLEND)
+	gl.enable(gl.BLEND);
 
 	gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
