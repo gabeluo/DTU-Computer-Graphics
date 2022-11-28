@@ -92,6 +92,7 @@
 		uniform mat4 u_View;
 		uniform mat4 u_Perspective;
 		uniform mat4 u_Model;
+		uniform mat4 u_Reflection;
 		uniform mat3 u_NormalMatrix;
 		uniform mat4 u_Light_Perspective;
 		uniform mat4 u_Light_View;
@@ -103,7 +104,7 @@
 
 		void main()
 		{
-			gl_Position = u_Perspective * u_View * u_Model * a_Position;
+			gl_Position = u_Perspective * u_View * u_Reflection * u_Model * a_Position;
 			v_PositionFromLight = u_Light_Perspective * u_Light_View * u_Model * a_Position;
 			v_Position = (u_Model * a_Position).xyz;
 			v_Color = a_Color;		
