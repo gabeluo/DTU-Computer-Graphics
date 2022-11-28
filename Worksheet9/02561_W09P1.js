@@ -42,7 +42,7 @@ window.onload = function init()
 
 	var teapotHeight = -1.0;
 
-	var lightIntensity = vec3(1.0, 1.0, 1.0);
+	var lightIntensity = vec3(5.0, 5.0, 5.0);
 	var diffusionCoefficient = 0.5;
 	var ambientCoefficient = 0.1;
 	var specularCoefficient = 0.5;
@@ -129,8 +129,8 @@ window.onload = function init()
 	toggleMovement.addEventListener("click", function (ev) {
 		jump = !jump;
 	});
-	document.getElementById("emittedRadience").oninput = function () {
-		lightIntensity = vec3(document.getElementById("emittedRadience").value, document.getElementById("emittedRadience").value, document.getElementById("emittedRadience").value);
+	document.getElementById("lightIntensity").oninput = function () {
+		lightIntensity = vec3(document.getElementById("lightIntensity").value, document.getElementById("lightIntensity").value, document.getElementById("lightIntensity").value);
 	};
 	document.getElementById("ambientCoefficient").oninput = function () {
 		ambientCoefficient = document.getElementById("ambientCoefficient").value;
