@@ -2,14 +2,12 @@ var g_objDoc = null; // The information of OBJ file
 var g_drawingInfo = null; // The information for drawing 3D model
 var shadow_g_drawingInfo = null; // The information for drawing 3D model
 var teapotProgram = null;
+var tableProgram = null;
 
 window.onload = function init()
 {
 	var canvas = document.getElementById("gl-canvas");
 	var gl = WebGLUtils.setupWebGL(canvas, { alpha: false, stencil: true });
-
-	gl.enable(gl.DEPTH_TEST);
-	gl.enable(gl.BLEND);
 	
 	gl.clearColor(0.3921, 0.5843, 0.9294, 1.0);
 
@@ -30,7 +28,7 @@ window.onload = function init()
 
 	var shadowProgram = initShaders(gl, "shadow-vertex-shader", "shadow-fragment-shader");
 	teapotProgram = initShaders(gl, "teapot-vertex-shader", "teapot-fragment-shader");
-	var tableProgram = initShaders(gl, "table-vertex-shader", "table-fragment-shader");
+	tableProgram = initShaders(gl, "table-vertex-shader", "table-fragment-shader");
 	
 	// create the shadow map
 	gl.useProgram(shadowProgram);
@@ -70,6 +68,7 @@ window.onload = function init()
 	var teapotNormalMatrixLoc = gl.getUniformLocation(teapotProgram,"u_NormalMatrix");
 	var teapotViewMatrixLoc = gl.getUniformLocation(teapotProgram,"u_View");
 	var teapotModelMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Model");
+	var teapotReflectionMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Reflection");
 	var teapotLightViewMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Light_View");
 	var teapotLightPerspectiveMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Light_Perspective");
 
@@ -191,7 +190,9 @@ window.onload = function init()
 			gl.viewport(0, 0, fbo.width, fbo.height);
 			gl.clearColor(1.0, 1.0, 1.0, 1.0);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-			gl.blendFunc(gl.ONE, gl.ZERO);
+			gl.enable(gl.DEPTH_TEST);
+			//gl.enable(gl.DEPTH_BUFFER_BIT);
+			gl.disable(gl.STENCIL_TEST);
 
 			gl.useProgram(shadowProgram);
 			gl.uniformMatrix4fv(shadowViewMatrixLoc, false, flatten(lightV));
@@ -210,33 +211,87 @@ window.onload = function init()
 
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 			gl.clearColor(0.3921, 0.5843, 0.9294, 1.0);
-			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+			gl.clearStencil(0);
 	
 			// draw teapot
-			gl.useProgram(teapotProgram);
-			initAttributeVariable(gl, teapotProgram.a_Position, model.vertexBuffer);
-			initAttributeVariable(gl, teapotProgram.a_Normal, model.normalBuffer);
-			initAttributeVariable(gl, teapotProgram.a_Color, model.colorBuffer);
-			var N = normalMatrix(modelMatrix, true);
-			gl.uniform3fv(cameraPositionLoc, eyePos);
-			gl.uniform3fv(cameraAimLoc, eyeAt);
-			gl.uniform4fv(teapotLightPositionLoc, flatten(lightPos));
-			gl.uniform3fv(teapotLightIntensityLoc, flatten(lightIntensity));
-			gl.uniform1f(teapotAmbientCoefficientLoc, ambientCoefficient);
-			gl.uniform1f(teapotDiffusionCoefficientLoc, diffusionCoefficient);
-			gl.uniform1f(teapotSpecularCoefficientLoc, specularCoefficient);
-			gl.uniform1f(teapotShininessCoefficientLoc, shininessCoefficient);
-			gl.uniformMatrix4fv(teapotViewMatrixLoc, false, flatten(V));
-			gl.uniformMatrix4fv(teapotPerspectiveMatrixLoc, false, flatten(P));
-			gl.uniformMatrix4fv(teapotLightViewMatrixLoc, false, flatten(lightV));
-			gl.uniformMatrix4fv(teapotLightPerspectiveMatrixLoc, false, flatten(lightP));
-			gl.uniformMatrix4fv(teapotModelMatrixLoc, false, flatten(modelMatrix));
-			gl.uniformMatrix3fv(teapotNormalMatrixLoc, false, flatten(N));
-			gl.uniform1i(gl.getUniformLocation(teapotProgram, "shadowMap"), 0);
-			gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
+			drawTeapot(false);
+
+			// create stencil buffer
+			gl.enable(gl.STENCIL_TEST);
+			//gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+			gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+			gl.stencilFunc(gl.ALWAYS, 1, ~0);
+			gl.colorMask(0,0,0,0);
+			// draw mirror surface, the table
+			drawTable(false);
+
+			gl.depthRange(1,1); // always
+			gl.depthFunc(gl.ALWAYS); // write the farthest depth value
+			gl.stencilFunc(gl.EQUAL, 1, ~0); // match mirror’s visible pixels
+			gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP); // do not change stencil values
+			// draw mirror surface, the table
+			drawTable(false);
+
+			gl.depthFunc(gl.LESS);
+			gl.colorMask(1,1,1,1);
+			gl.depthRange(0,1);
 
 			// reflected teapot
-			var R = mat4();
+			drawTeapot(true);
+
+			gl.stencilOp(gl.KEEP, gl.KEEP, gl.ZERO);
+			gl.depthFunc(gl.ALWAYS);
+
+			// draw table
+			drawTable(true);
+			gl.depthFunc(gl.LESS);
+		}
+	}
+
+	function drawTable(alphaBlend){
+		gl.useProgram(tableProgram);
+		initAttributeVariable(gl, tableProgram.a_Position, positionbuffer);
+		initAttributeVariable(gl, tableProgram.a_TexCoord, tBuffer);
+		if (alphaBlend) {
+			gl.enable(gl.BLEND);
+			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+		}
+		gl.uniformMatrix4fv(tableViewMatrixLoc, false, flatten(V));
+		gl.uniformMatrix4fv(tableLightViewMatrixLoc, false, flatten(lightV));
+		gl.uniformMatrix4fv(tableLightPerspectiveMatrixLoc, false, flatten(lightP));
+		gl.uniformMatrix4fv(tablePerspectiveMatrixLoc, false, flatten(P));
+		gl.uniform1i(gl.getUniformLocation(tableProgram, "shadowMap"), 0);
+		gl.uniform1i(gl.getUniformLocation(tableProgram, "marbletexMap"), 1);
+		gl.drawArrays(gl.TRIANGLES, 0, 6);
+		if (alphaBlend)
+			gl.disable(gl.BLEND);
+	}
+
+	function drawTeapot(reflection) {
+		gl.useProgram(teapotProgram);
+		initAttributeVariable(gl, teapotProgram.a_Position, model.vertexBuffer);
+		initAttributeVariable(gl, teapotProgram.a_Normal, model.normalBuffer);
+		initAttributeVariable(gl, teapotProgram.a_Color, model.colorBuffer);
+		var N = normalMatrix(modelMatrix, true);
+		gl.uniform3fv(cameraPositionLoc, eyePos);
+		gl.uniform3fv(cameraAimLoc, eyeAt);
+		gl.uniform4fv(teapotLightPositionLoc, flatten(lightPos));
+		gl.uniform3fv(teapotLightIntensityLoc, flatten(lightIntensity));
+		gl.uniform1f(teapotAmbientCoefficientLoc, ambientCoefficient);
+		gl.uniform1f(teapotDiffusionCoefficientLoc, diffusionCoefficient);
+		gl.uniform1f(teapotSpecularCoefficientLoc, specularCoefficient);
+		gl.uniform1f(teapotShininessCoefficientLoc, shininessCoefficient);
+		gl.uniformMatrix4fv(teapotViewMatrixLoc, false, flatten(V));
+		gl.uniformMatrix4fv(teapotPerspectiveMatrixLoc, false, flatten(P));
+		gl.uniformMatrix4fv(teapotLightViewMatrixLoc, false, flatten(lightV));
+		gl.uniformMatrix4fv(teapotLightPerspectiveMatrixLoc, false, flatten(lightP));
+		gl.uniformMatrix4fv(teapotModelMatrixLoc, false, flatten(modelMatrix));
+		gl.uniformMatrix4fv(teapotReflectionMatrixLoc, false, flatten(mat4()));
+		gl.uniformMatrix3fv(teapotNormalMatrixLoc, false, flatten(N));
+		gl.uniform1i(gl.getUniformLocation(teapotProgram, "shadowMap"), 0);
+		var R = mat4();
+		if (reflection) {
 			var V_r = vec3(0.0, 1.0, 0.0);
 			var P_r = vec3(0.0, -1.0, -3.0);
 			R[0][0] = 1.0-2.0*Math.pow(V_r[0],2.0);
@@ -251,26 +306,10 @@ window.onload = function init()
 			R[2][1] = -2.0*V_r[1]*V_r[2];
 			R[2][2] = 1.0-2.0*Math.pow(V_r[2],2.0);
 			R[2][3] = 2.0*(dot(P_r, V_r))*V_r[2];
-			modelMatrix = mult(R, modelMatrix);
-			N = normalMatrix(modelMatrix, true);
-			gl.uniformMatrix3fv(teapotNormalMatrixLoc, false, flatten(N));
-			gl.uniformMatrix4fv(teapotModelMatrixLoc, false, flatten(modelMatrix));
-			gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
-
-			// draw objects normally
-			// draw ground
-			gl.useProgram(tableProgram);
-			initAttributeVariable(gl, tableProgram.a_Position, positionbuffer);
-			initAttributeVariable(gl, tableProgram.a_TexCoord, tBuffer);
-			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-			gl.uniformMatrix4fv(tableViewMatrixLoc, false, flatten(V));
-			gl.uniformMatrix4fv(tableLightViewMatrixLoc, false, flatten(lightV));
-			gl.uniformMatrix4fv(tableLightPerspectiveMatrixLoc, false, flatten(lightP));
-			gl.uniformMatrix4fv(tablePerspectiveMatrixLoc, false, flatten(P));
-			gl.uniform1i(gl.getUniformLocation(tableProgram, "shadowMap"), 0);
-			gl.uniform1i(gl.getUniformLocation(tableProgram, "marbletexMap"), 1);
-			gl.drawArrays(gl.TRIANGLES, 0, 6);
 		}
+		gl.uniformMatrix4fv(teapotReflectionMatrixLoc, false, flatten(R));
+		gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
+
 	}
 }
 
