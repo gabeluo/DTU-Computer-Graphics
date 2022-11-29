@@ -64,6 +64,7 @@
 		precision mediump float;
 		uniform sampler2D shadowMap;
 		uniform sampler2D marbletexMap;
+		uniform float u_ambientCoefficient;
 		varying vec4 v_PositionFromLight;
 		varying vec2 vTexCoord;
 
@@ -77,9 +78,10 @@
 			vec3 shadowCoord = (v_PositionFromLight.xyz/v_PositionFromLight.w)/2.0 + 0.5;
 			vec4 rgbaDepth = texture2D(shadowMap, shadowCoord.xy);
 			float depth = unpackDepth(rgbaDepth);
-			float visibility = (shadowCoord.z > depth + 0.005) ? 0.4 : 1.0;
+			float visibility = (shadowCoord.z > depth + 0.0015) ? 0.4 : 1.0;
+			vec3 L_a = vec3(u_ambientCoefficient);
 			gl_FragColor = texture2D(marbletexMap, vTexCoord);
-			gl_FragColor = gl_FragColor * visibility;
+			gl_FragColor.rgb = gl_FragColor.rgb * visibility + L_a;
 			gl_FragColor.a = 0.7;
 		}
 	</script>
@@ -140,13 +142,13 @@
 			vec3 shadowCoord = (v_PositionFromLight.xyz/v_PositionFromLight.w)/2.0 + 0.5;
 			vec4 rgbaDepth = texture2D(shadowMap, shadowCoord.xy);
 			float depth = unpackDepth(rgbaDepth);
-			float visibility = (shadowCoord.z > depth + 0.005) ? 0.4 : 1.0;
+			float visibility = (shadowCoord.z > depth + 0.0015) ? 0.4 : 1.0;
 
 			vec3 n_Normal = normalize(v_Normal);
 			vec3 w_i = normalize(u_lightPosition.xyz - v_Position);
 			vec3 L_i = u_lightIntensity/pow(length(u_lightPosition.xyz - v_Position), 2.0);
 			vec3 L_rd = u_diffuseCoefficient * v_Color.rgb * L_i * max(dot(n_Normal, w_i), 0.0);
-			vec3 L_a = u_ambientCoefficient * u_lightIntensity;
+			vec3 L_a = vec3(u_ambientCoefficient);
 			vec3 w_o = normalize(u_cameraPosition - v_Position);
 			vec3 w_h = normalize(w_i + w_o);
 			vec3 L_o = L_rd + u_specularCoefficient * L_i * pow(max(dot(n_Normal, w_h), 0.0), u_shininessCoefficient);
@@ -162,7 +164,7 @@
 	<button id="toggleMovement">Toggle Teapot Movement</button>
 	<div>
 		Light Intensity (I): 0.0 <input id="lightIntensity" type="range"
-		min="0.0" max="10.0" step="0.5" value="5.0" />
+		min="0.0" max="10.0" step="0.5" value="8.0" />
 		10.0
 	</div>
 	<div>
@@ -172,7 +174,7 @@
 	</div>
 	<div>
 		Diffuse coefficient (k_d): 0.0 <input id="diffuseCoefficient" type="range"
-		min="0.0" max="1.0" step="0.1" value="0.75" />
+		min="0.0" max="1.0" step="0.1" value="1.0" />
 		1.0
 	</div>
 	<div>
