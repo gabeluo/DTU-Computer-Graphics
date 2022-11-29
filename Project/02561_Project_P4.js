@@ -14,17 +14,21 @@ window.onload = function init()
 	var imageLoaded = false;
 	var rotate = true;
 	var jump = false;
-	var movingUp = true;
+	var movingUp = false;
 
 	var P = perspective(65, 1, 0.1, 10);
 	var eyePos = vec3(0.0, 0.0, 1.0);
 	var eyeUp = vec3(0.0, 1.0, 0.0);
-	var eyeAt = vec3(0.0, 0.0, -3.0)
+	var eyeAt = vec3(0.0, 0.0, -3.0);
+	//var V = mat4();
 	var V = lookAt(eyePos, eyeAt, eyeUp);
-	var lightP = perspective(100, 1, 1.0, 5.5);
+	var lightP = perspective(105, 1, 0.5, 4.75);
 	var lighteyeUp = vec3(0.0, 1.0, 0.0);
 	var lighteyeAt = vec3(0.0, -3.0, -2.0)
 	var modelMatrix;
+	var reflectionP;
+	var reflectionClipOutsidePlane = findClipPlane(V, -1.0);
+	var reflectionClipInsidePlane = findClipPlane(V, 1.0);
 
 	var shadowProgram = initShaders(gl, "shadow-vertex-shader", "shadow-fragment-shader");
 	teapotProgram = initShaders(gl, "teapot-vertex-shader", "teapot-fragment-shader");
@@ -32,7 +36,7 @@ window.onload = function init()
 	
 	// create the shadow map
 	gl.useProgram(shadowProgram);
-	var fbo = initFramebufferObject(gl, 512, 512);
+	var fbo = initFramebufferObject(gl, 2048, 2048);
 	var shadowModel = initObject(gl, "./teapot/teapot.obj", 0.25, shadowProgram);
 
 	var shadowPerspectiveMatrixLoc = gl.getUniformLocation(shadowProgram,"u_Perspective");
@@ -50,14 +54,13 @@ window.onload = function init()
 
 	var teapotHeight = -1.0;
 
-	var lightIntensity = vec3(5.0, 5.0, 5.0);
-	var diffusionCoefficient = 0.75;
+	var lightIntensity = vec3(8.0, 8.0, 8.0);
+	var diffusionCoefficient = 1.0;
 	var ambientCoefficient = 0.1;
 	var specularCoefficient = 0.5;
 	var shininessCoefficient = 500.0;
 
 	var cameraPositionLoc = gl.getUniformLocation(teapotProgram,"u_cameraPosition");
-	var cameraAimLoc = gl.getUniformLocation(teapotProgram,"u_cameraAim");
 	var teapotLightPositionLoc = gl.getUniformLocation(teapotProgram,"u_lightPosition");
 	var teapotLightIntensityLoc = gl.getUniformLocation(teapotProgram,"u_lightIntensity");
 	var teapotDiffusionCoefficientLoc = gl.getUniformLocation(teapotProgram,"u_diffuseCoefficient");
@@ -126,6 +129,7 @@ window.onload = function init()
 	var tableViewMatrixLoc = gl.getUniformLocation(tableProgram,"u_View");
 	var tableLightViewMatrixLoc = gl.getUniformLocation(tableProgram,"u_Light_View");
 	var tableLightPerspectiveMatrixLoc = gl.getUniformLocation(tableProgram,"u_Light_Perspective");
+	var tableAmbientCoefficientLoc = gl.getUniformLocation(tableProgram,"u_ambientCoefficient");
 
 	toggleRotation.addEventListener("click", function (ev) {
 		rotate = !rotate;
@@ -175,7 +179,7 @@ window.onload = function init()
 					teapotHeight -= 0.01;
 				if (teapotHeight >= 0.0)
 					movingUp = false;
-				if (teapotHeight <= -1.0)
+				if (teapotHeight <= -1.8)
 					movingUp = true;
 			}
 
@@ -189,10 +193,9 @@ window.onload = function init()
 			gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
 			gl.viewport(0, 0, fbo.width, fbo.height);
 			gl.clearColor(1.0, 1.0, 1.0, 1.0);
-			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 			gl.enable(gl.DEPTH_TEST);
-			//gl.enable(gl.DEPTH_BUFFER_BIT);
-			gl.disable(gl.STENCIL_TEST);
+			gl.disable(gl.STENCIL_TEST)
 
 			gl.useProgram(shadowProgram);
 			gl.uniformMatrix4fv(shadowViewMatrixLoc, false, flatten(lightV));
@@ -210,12 +213,14 @@ window.onload = function init()
 			gl.drawElements(gl.TRIANGLES, shadow_g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
 
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+			gl.viewport(0, 0, canvas.width, canvas.height);
 			gl.clearColor(0.3921, 0.5843, 0.9294, 1.0);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 			gl.clearStencil(0);
 	
 			// draw teapot
-			drawTeapot(false);
+			reflectionP = modifyProjectionMatrix(reflectionClipInsidePlane, P);
+			drawTeapot(false, P);
 
 			// create stencil buffer
 			gl.enable(gl.STENCIL_TEST);
@@ -238,7 +243,8 @@ window.onload = function init()
 			gl.depthRange(0,1);
 
 			// reflected teapot
-			drawTeapot(true);
+			reflectionP = modifyProjectionMatrix(reflectionClipOutsidePlane, P);
+			drawTeapot(true, reflectionP);
 
 			gl.stencilOp(gl.KEEP, gl.KEEP, gl.ZERO);
 			gl.depthFunc(gl.ALWAYS);
@@ -261,6 +267,7 @@ window.onload = function init()
 		gl.uniformMatrix4fv(tableLightViewMatrixLoc, false, flatten(lightV));
 		gl.uniformMatrix4fv(tableLightPerspectiveMatrixLoc, false, flatten(lightP));
 		gl.uniformMatrix4fv(tablePerspectiveMatrixLoc, false, flatten(P));
+		gl.uniform1f(tableAmbientCoefficientLoc, ambientCoefficient);
 		gl.uniform1i(gl.getUniformLocation(tableProgram, "shadowMap"), 0);
 		gl.uniform1i(gl.getUniformLocation(tableProgram, "marbletexMap"), 1);
 		gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -268,14 +275,13 @@ window.onload = function init()
 			gl.disable(gl.BLEND);
 	}
 
-	function drawTeapot(reflection) {
+	function drawTeapot(reflection, perspectiveMatrix) {
 		gl.useProgram(teapotProgram);
 		initAttributeVariable(gl, teapotProgram.a_Position, model.vertexBuffer);
 		initAttributeVariable(gl, teapotProgram.a_Normal, model.normalBuffer);
 		initAttributeVariable(gl, teapotProgram.a_Color, model.colorBuffer);
 		var N = normalMatrix(modelMatrix, true);
 		gl.uniform3fv(cameraPositionLoc, eyePos);
-		gl.uniform3fv(cameraAimLoc, eyeAt);
 		gl.uniform4fv(teapotLightPositionLoc, flatten(lightPos));
 		gl.uniform3fv(teapotLightIntensityLoc, flatten(lightIntensity));
 		gl.uniform1f(teapotAmbientCoefficientLoc, ambientCoefficient);
@@ -283,11 +289,10 @@ window.onload = function init()
 		gl.uniform1f(teapotSpecularCoefficientLoc, specularCoefficient);
 		gl.uniform1f(teapotShininessCoefficientLoc, shininessCoefficient);
 		gl.uniformMatrix4fv(teapotViewMatrixLoc, false, flatten(V));
-		gl.uniformMatrix4fv(teapotPerspectiveMatrixLoc, false, flatten(P));
+		gl.uniformMatrix4fv(teapotPerspectiveMatrixLoc, false, flatten(perspectiveMatrix));
 		gl.uniformMatrix4fv(teapotLightViewMatrixLoc, false, flatten(lightV));
 		gl.uniformMatrix4fv(teapotLightPerspectiveMatrixLoc, false, flatten(lightP));
 		gl.uniformMatrix4fv(teapotModelMatrixLoc, false, flatten(modelMatrix));
-		gl.uniformMatrix4fv(teapotReflectionMatrixLoc, false, flatten(mat4()));
 		gl.uniformMatrix3fv(teapotNormalMatrixLoc, false, flatten(N));
 		gl.uniform1i(gl.getUniformLocation(teapotProgram, "shadowMap"), 0);
 		var R = mat4();
@@ -309,7 +314,16 @@ window.onload = function init()
 		}
 		gl.uniformMatrix4fv(teapotReflectionMatrixLoc, false, flatten(R));
 		gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
+	}
 
+	function findClipPlane(viewMatrix, value) {
+		var N = vec3(0.0, 1.0*value, 0.0);
+		var P = vec3(0.0, -1.0, -3.0);
+
+		plane = vec4(N, -1.0*dot(N, P));
+		var viewMatrix = transpose(inverse(viewMatrix));
+
+		return mult(viewMatrix, plane);
 	}
 }
 
@@ -423,4 +437,17 @@ function initFramebufferObject(gl, width, height)
 	gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 	framebuffer.width = width; framebuffer.height = height;
 	return framebuffer;
+}
+
+function modifyProjectionMatrix(clipplane, projection) {
+	// MV.js has no copy constructor for matrices
+	var oblique = mult(mat4(), projection);
+	var q = vec4((Math.sign(clipplane[0]) + projection[0][2])/projection[0][0],
+	(Math.sign(clipplane[1]) + projection[1][2])/projection[1][1],
+	-1.0,
+	(1.0 + projection[2][2])/projection[2][3]);
+	var s = 2.0/dot(clipplane, q);
+	oblique[2] = vec4(clipplane[0]*s, clipplane[1]*s,
+	clipplane[2]*s + 1.0, clipplane[3]*s);
+	return oblique;
 }
