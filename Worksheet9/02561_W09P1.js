@@ -42,17 +42,14 @@ window.onload = function init()
 
 	var teapotHeight = -1.0;
 
-	var lightIntensity = vec3(5.0, 5.0, 5.0);
-	var diffusionCoefficient = 0.5;
+	var lightIntensity = vec3(8.0, 8.0, 8.0);
+	var diffusionCoefficient = 1.0;
 	var ambientCoefficient = 0.1;
 	var specularCoefficient = 0.5;
 	var shininessCoefficient = 500.0;
 
 	var cameraPositionLoc = gl.getUniformLocation(teapotProgram,"u_cameraPosition");
 	gl.uniform3fv(cameraPositionLoc, flatten(eyePos));
-
-	var cameraAimLoc = gl.getUniformLocation(teapotProgram,"u_cameraAim");
-	gl.uniform3fv(cameraAimLoc, flatten(eyeAt));
 
 	var teapotLightPositionLoc = gl.getUniformLocation(teapotProgram,"u_lightPosition");
 	var teapotLightIntensityLoc = gl.getUniformLocation(teapotProgram,"u_lightIntensity");
