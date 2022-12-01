@@ -82,7 +82,7 @@
 			vec3 L_a = vec3(u_ambientCoefficient);
 			gl_FragColor = texture2D(marbletexMap, vTexCoord);
 			gl_FragColor.rgb = gl_FragColor.rgb * visibility + L_a;
-			gl_FragColor.a = 0.6;
+			gl_FragColor.a = 0.4;
 		}
 	</script>
 

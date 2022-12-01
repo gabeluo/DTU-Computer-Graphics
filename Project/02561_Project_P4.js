@@ -195,7 +195,7 @@ window.onload = function init()
 			gl.clearColor(1.0, 1.0, 1.0, 1.0);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 			gl.enable(gl.DEPTH_TEST);
-			gl.disable(gl.STENCIL_TEST)
+			gl.disable(gl.STENCIL_TEST);
 
 			gl.useProgram(shadowProgram);
 			gl.uniformMatrix4fv(shadowViewMatrixLoc, false, flatten(lightV));
@@ -219,10 +219,10 @@ window.onload = function init()
 			gl.clearStencil(0);
 	
 			// draw teapot
-			reflectionP = modifyProjectionMatrix(reflectionClipInsidePlane, P);
-			drawTeapot(false, P);
+			// reflectionP = modifyProjectionMatrix(reflectionClipInsidePlane, P);
+			// drawTeapot(false, reflectionP);
 
-			// create stencil buffer
+			//create stencil buffer
 			gl.enable(gl.STENCIL_TEST);
 			//gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 			gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
@@ -246,12 +246,18 @@ window.onload = function init()
 			reflectionP = modifyProjectionMatrix(reflectionClipOutsidePlane, P);
 			drawTeapot(true, reflectionP);
 
+			gl.clear(gl.DEPTH_BUFFER_BIT);
+			gl.depthFunc(gl.LESS);
+			//gl.disable(gl.STENCIL_TEST);
+
 			gl.stencilOp(gl.KEEP, gl.KEEP, gl.ZERO);
 			gl.depthFunc(gl.ALWAYS);
 
 			// draw table
 			drawTable(true);
 			gl.depthFunc(gl.LESS);
+			gl.disable(gl.STENCIL_TEST);
+			drawTeapot(false, P);
 		}
 	}
 
@@ -320,7 +326,7 @@ window.onload = function init()
 		var N = vec3(0.0, 1.0*value, 0.0);
 		var P = vec3(0.0, -1.0, -3.0);
 
-		plane = vec4(N, -1.0*dot(N, P));
+		var plane = vec4(N, -1.0*dot(N, P));
 		var viewMatrix = transpose(inverse(viewMatrix));
 
 		return mult(viewMatrix, plane);
