@@ -16,17 +16,23 @@ window.onload = function init()
 
 	var model = initObject(gl, "./teapot/teapot.obj", 0.25);
 
-	var P = perspective(30, 1, 0.1, 10);
-	var V = lookAt(vec3(0, 0, 4), vec3(0, 0, 0), vec3(0, 1, 0));
-	var T = translate(0, -0.5, 0);
+	var q_rot = new Quaternion();
+	var q_inc = new Quaternion();
 
-	var currentAngle = [0.0, 0.0];
+	var P = perspective(30, 1, 0.1, 10);
+	var eye = vec3(0, 0, 4);
+	var up = vec3(0, 1, 0);
+	var at = vec3(0, 0, 0);
+	var z = vec3([eye[0] - at[0], eye[1] - at[1], eye[2] - at[2]]);
+	q_rot = q_rot.make_rot_vec2vec(vec3(0, 0, 1), normalize(z));
+
+	var T = translate(0, -0.5, 0);
 
 	var viewMatrixLoc = gl.getUniformLocation(gl.program,"u_View");
 	var perspectiveMatrixLoc = gl.getUniformLocation(gl.program,"u_Perspective");
 	var transformationMatrixLoc = gl.getUniformLocation(gl.program,"u_Transformation");
 
-	initEventHandlers(canvas, currentAngle);
+	initEventHandlers(canvas, q_rot, q_inc);
 	
 	function tick() {
 		render(gl, model);
@@ -44,17 +50,16 @@ window.onload = function init()
 		if (!g_drawingInfo) return;
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		// Apply rotations
-		var Rx = rotateX(-currentAngle[0]);
-		var Ry = rotateY(-currentAngle[1]);
-		rotatedT = mult(Rx, mult(Ry, T));
+		var V = lookAt(add(q_rot.apply(eye), at), at, q_rot.apply(up));
+
 		gl.uniformMatrix4fv(viewMatrixLoc, false, flatten(V));
 		gl.uniformMatrix4fv(perspectiveMatrixLoc, false, flatten(P));
-		gl.uniformMatrix4fv(transformationMatrixLoc, false, flatten(rotatedT));
+		gl.uniformMatrix4fv(transformationMatrixLoc, false, flatten(T));
 		gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
 	}
 }
 
-function initEventHandlers(canvas, currentAngle) {
+function initEventHandlers(canvas, qrot, qinc) {
 	var dragging = false; // Dragging or not
 	var lastX = -1, lastY = -1; // Last position of the mouse
 
@@ -73,19 +78,34 @@ function initEventHandlers(canvas, currentAngle) {
 	};
 
 	canvas.onmousemove = function(ev) { // Mouse is moved
+		var bbox = ev.target.getBoundingClientRect();
 		var x = ev.clientX, y = ev.clientY;
 		if (dragging) {
-			var factor = 100/canvas.height; // The rotation ratio
-			var dx = factor * (x - lastX);
-			var dy = factor * (y - lastY);
-			// Limit x-axis rotation angle to -90 to 90 degrees
-			currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
-			currentAngle[1] = currentAngle[1] + dx;
+			qrot = qrot.multiply(qinc);
+			var mousepos = vec2(2*(x - bbox.left)/canvas.width - 1, 2*(canvas.height - y + bbox.top - 1)/canvas.height - 1);
+			var lastmousepos = vec2(2*(lastX - bbox.left)/canvas.width - 1, 2*(canvas.height - lastY + bbox.top - 1)/canvas.height - 1);
+
+			var v1 = vec3([mousepos[0], mousepos[1], project_to_sphere(mousepos[0], mousepos[1])]);
+            var v2 = vec3([lastmousepos[0], lastmousepos[1], project_to_sphere(lastmousepos[0], lastmousepos[1])]);
+            qinc = qinc.make_rot_vec2vec(normalize(v1), normalize(v2));
 		}
 		lastX = x, lastY = y;
 	};
 }
 
+function project_to_sphere(x, y) {
+	var r = 2;
+	var d = Math.sqrt(x * x + y * y);
+	var t = r * Math.sqrt(2);
+	var z;
+	if (d < r) // Inside sphere
+	  z = Math.sqrt(r * r - d * d);
+	else if (d < t)
+	  z = 0;
+	else       // On hyperbola
+	  z = t * t / d;
+	return z;
+}
 
 function initObject(gl, obj_filename, scale)
 {
