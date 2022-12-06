@@ -36,6 +36,7 @@ window.onload = function init()
 	program = initShaders(gl, "vertex-shader", "fragment-shader");
 	gl.useProgram(program);
 	
+	// define HTML elements
 	var canvas = document.getElementById("gl-canvas");
 	var colorMenu = document.getElementById("colorMenu");
 	var clearMenu = document.getElementById("clearMenu");
@@ -62,6 +63,7 @@ window.onload = function init()
 	render(gl);
 	
 	var mousepos = vec2(0.0, 0.0);
+	// event listeners
 	canvas.addEventListener("click", function (ev) {
 		var bbox = ev.target.getBoundingClientRect();
 		mousepos = vec2(2*(ev.clientX - bbox.left)/canvas.width - 1, 2*(canvas.height - ev.clientY + bbox.top - 1)/canvas.height - 1);
@@ -172,6 +174,7 @@ function render(gl) {
 		}
 	}
 	
+	// triangles
 	counter = 0
 	temp = triangles[0];
 	for (let i = 0; i<triangles.length; i++) {
@@ -196,7 +199,7 @@ function render(gl) {
 		}
 	}
 	
-	// Draw the circles
+	// circles
 	for (let k = 0; k<circles.length; k++) {
 		gl.drawArrays(gl.TRIANGLE_FAN, circles[k], numCirclePoints+2);
 	}
