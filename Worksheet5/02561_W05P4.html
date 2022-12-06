@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>02561 W5P2</title>
+	<title>02561 W5P4</title>
 	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
 	<script type="text/javascript" src="../Common/initShaders.js"></script>
 	<script type="text/javascript" src="../Common/MV.js"></script>
 	<script type="text/javascript" src="../Common/OBJParser.js"> </script>
-	<script type="text/javascript" src="02561_W05P2.js"></script>
+	<script type="text/javascript" src="02561_W05P4.js"></script>
 	
 	<script id="vertex-shader" type="x-shader/x-vertex">
 		attribute vec4 a_Position;
@@ -16,38 +16,13 @@
 		uniform mat4 u_View;
 		uniform mat4 u_Perspective;
 		uniform mat4 u_Translation;
-		
-		uniform float u_diffuseCoefficient;
-		uniform float u_ambientCoefficient;
-		uniform float u_specularCoefficient;
-		uniform float u_shininessCoefficient;
-		uniform vec3 u_lightEmission;
-		uniform vec4 u_lightDirection;
-		uniform vec3 u_cameraPosition;
-		uniform vec3 u_cameraAim;
 
 		varying vec4 v_Color;
 		varying vec3 v_Normal;
-		varying float v_diffuseCoefficient;
-		varying float v_ambientCoefficient;
-		varying float v_specularCoefficient;
-		varying float v_shininessCoefficient;
-		varying vec3 v_lightEmission;
-		varying vec4 v_lightDirection;
-		varying vec3 v_cameraPosition;
-		varying vec3 v_cameraAim;
 
 		void main()
 		{
 			gl_Position = u_Perspective * u_View * u_Translation * a_Position;
-			v_diffuseCoefficient = u_diffuseCoefficient;
-			v_ambientCoefficient = u_ambientCoefficient;
-			v_specularCoefficient = u_specularCoefficient;
-			v_shininessCoefficient = u_shininessCoefficient;
-			v_lightEmission = u_lightEmission;
-			v_lightDirection = u_lightDirection;
-			v_cameraPosition = u_cameraPosition;
-			v_cameraAim = u_cameraAim;
 			v_Color = a_Color;
 			v_Normal = a_Normal;
 		}
@@ -57,25 +32,25 @@
 		precision mediump float;
 		varying vec4 v_Color;
 		varying vec3 v_Normal;
-		varying float v_diffuseCoefficient;
-		varying float v_ambientCoefficient;
-		varying float v_specularCoefficient;
-		varying float v_shininessCoefficient;
-		varying vec3 v_lightEmission;
-		varying vec4 v_lightDirection;
-		varying vec3 v_cameraPosition;
-		varying vec3 v_cameraAim;
+		uniform float u_diffuseCoefficient;
+		uniform float u_ambientCoefficient;
+		uniform float u_specularCoefficient;
+		uniform float u_shininessCoefficient;
+		uniform vec3 u_lightEmission;
+		uniform vec4 u_lightDirection;
+		uniform vec3 u_cameraPosition;
+		uniform vec3 u_cameraAim;
 
 		void main()
 		{
 			vec3 n_Normal = normalize(v_Normal);
-			vec4 n_lightDirection = normalize(v_lightDirection);
+			vec4 n_lightDirection = normalize(u_lightDirection);
 
-			vec3 L_rd = v_diffuseCoefficient * v_Color.rgb * v_lightEmission * max(dot(n_Normal.xyz, -1.0 * n_lightDirection.xyz), 0.0);
-			vec3 L_a = v_ambientCoefficient * v_lightEmission;
-			vec3 w_o = normalize(v_cameraPosition - v_cameraAim);
+			vec3 L_rd = u_diffuseCoefficient * v_Color.rgb * u_lightEmission * max(dot(n_Normal.xyz, -1.0 * n_lightDirection.xyz), 0.0);
+			vec3 L_a = u_ambientCoefficient * u_lightEmission;
+			vec3 w_o = normalize(u_cameraPosition - u_cameraAim);
 			vec3 w_h = normalize(-1.0 * n_lightDirection.xyz + w_o);
-			vec3 L_o = L_rd + L_a + v_specularCoefficient * v_lightEmission * pow(max(dot(n_Normal.xyz, w_h), 0.0), v_shininessCoefficient);
+			vec3 L_o = L_rd + L_a + u_specularCoefficient * u_lightEmission * pow(max(dot(n_Normal.xyz, w_h), 0.0), u_shininessCoefficient);
 			
 			gl_FragColor.rgb = L_o;
 			gl_FragColor.a = v_Color.a;
