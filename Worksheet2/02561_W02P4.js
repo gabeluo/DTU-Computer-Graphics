@@ -96,8 +96,6 @@ window.onload = function init()
 			}
 			else {
 				points.push(index);
-				console.log(triangles);
-				console.log(points);
 				if (drawMode == 2) {
 					circleCentre = mousepos;
 					circlePoints++;
@@ -134,18 +132,15 @@ window.onload = function init()
 	
 	pointMode.addEventListener("click", function (ev) {
 		drawMode = 0;
-		console.log("Point Mode");
 	});
 	
 	triangleMode.addEventListener("click", function (ev) {
 		drawMode = 1;
 		trainglePoints = 0;
-		console.log("Triangle Mode");
 	});
 	
 	circleMode.addEventListener("click", function (ev) {
 		drawMode = 2;
-		console.log("Circle Mode");
 	});
 }
 
@@ -160,22 +155,18 @@ function render(gl) {
 			temp = points[i]+1;
 			if (i == points.length-1) {
 				if (i == 0){
-					console.log("pointsintial");
 					gl.drawArrays(gl.POINTS, points[i], 1)
 				} else {
-					console.log("points1");
 					gl.drawArrays(gl.POINTS, points[i-counter], counter+1)
 				}
 			}
 			counter++;
 		}
 		else {
-			console.log("points2");
 			gl.drawArrays(gl.POINTS, points[i-counter], counter)
 			temp = points[i]+1;
 			counter = 1;
 			if (i == points.length-1) {
-				console.log("points3");
 				gl.drawArrays(gl.POINTS, points[i], 1)
 			}
 		}
@@ -186,26 +177,20 @@ function render(gl) {
 	for (let i = 0; i<triangles.length; i++) {
 		if (triangles[i] == temp) {
 			temp = triangles[i]+3;
-			console.log(i);
 			if (i == triangles.length-1) {
 				if (i == 0){
-					console.log("triangleinitial");
 					gl.drawArrays(gl.TRIANGLES, triangles[i], 3)
 				} else {
-					console.log("triangles1");
-					console.log(counter);
 					gl.drawArrays(gl.TRIANGLES, triangles[i-counter], (counter+1)*3)
 				}
 			}
 			counter++;
 		}
 		else {
-			console.log("triangles2");
 			gl.drawArrays(gl.TRIANGLES, triangles[i-counter], counter*3)
 			temp = triangles[i]+3;
 			counter = 1;
 			if (i == triangles.length-1) {
-				console.log("triangles3");
 				gl.drawArrays(gl.TRIANGLES, triangles[i], 3)
 			}
 		}
@@ -213,7 +198,6 @@ function render(gl) {
 	
 	// Draw the circles
 	for (let k = 0; k<circles.length; k++) {
-		console.log(circles[k]);
 		gl.drawArrays(gl.TRIANGLE_FAN, circles[k], numCirclePoints+2);
 	}
 }
