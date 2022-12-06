@@ -211,10 +211,6 @@ function render(gl) {
 		}
 	}
 	
-/* 	for (let j = 0; j<triangles.length; j++) {
-		gl.drawArrays(gl.TRIANGLES, triangles[j], 3);
-	} */
-	
 	// Draw the circles
 	for (let k = 0; k<circles.length; k++) {
 		console.log(circles[k]);
