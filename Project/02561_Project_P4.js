@@ -225,7 +225,6 @@ window.onload = function init()
 
 			//create stencil buffer
 			gl.enable(gl.STENCIL_TEST);
-			//gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 			gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
 			gl.stencilFunc(gl.ALWAYS, 1, ~0);
 			gl.colorMask(0,0,0,0);
@@ -239,6 +238,7 @@ window.onload = function init()
 			// draw mirror surface, the table
 			drawTable(false);
 
+			// restore colour and depth test values to default
 			gl.depthFunc(gl.LESS);
 			gl.colorMask(1,1,1,1);
 			gl.depthRange(0,1);
