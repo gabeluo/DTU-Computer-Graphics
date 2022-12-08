@@ -228,37 +228,27 @@ window.onload = function init()
 			gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
 			gl.stencilFunc(gl.ALWAYS, 1, ~0);
 			gl.colorMask(0,0,0,0);
-			// draw mirror surface, the table
+			gl.disable(gl.DEPTH_TEST);
+			
+			// draw mirror surface, the table to stencil buffer
 			drawTable(false);
 
-			gl.depthRange(1,1); // always
-			gl.depthFunc(gl.ALWAYS); // write the farthest depth value
 			gl.stencilFunc(gl.EQUAL, 1, ~0); // match mirror’s visible pixels
 			gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP); // do not change stencil values
-			// draw mirror surface, the table
-			drawTable(false);
-
-			// restore colour and depth test values to default
-			gl.depthFunc(gl.LESS);
-			gl.colorMask(1,1,1,1);
-			gl.depthRange(0,1);
+			gl.colorMask(1,1,1,1); //  restore color mask
+			gl.enable(gl.DEPTH_TEST); // enable depth test
 
 			// reflected teapot
 			reflectionP = modifyProjectionMatrix(reflectionClipPlane, P);
 			drawTeapot(true, reflectionP);
 
+			gl.disable(gl.STENCIL_TEST);
 			gl.clear(gl.DEPTH_BUFFER_BIT);
-			gl.depthFunc(gl.LESS);
-
-			gl.stencilOp(gl.KEEP, gl.KEEP, gl.ZERO);
-			gl.depthFunc(gl.ALWAYS);
 
 			// draw table
 			drawTable(true);
-			gl.depthFunc(gl.LESS);
 
 			// draw real teapot
-			gl.disable(gl.STENCIL_TEST);
 			drawTeapot(false, P);
 		}
 	}
