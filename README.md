@@ -4,10 +4,8 @@
  Note that this code is still a work in progress as the course is ongoing.
  
  Future improvements include:
- - Commenting and cleaning up code
- - Finishing up Worksheets 7, 8, and 9
- - Completion of the final course project
  - Short descriptions of the tasks for each worksheet
+ - Attempt another one of the project ideas
  
  The repository will be updated periodically until the completion of the course.
  
