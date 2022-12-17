@@ -235,7 +235,7 @@ window.onload = function init()
 
 			gl.stencilFunc(gl.EQUAL, 1, ~0); // match mirror’s visible pixels
 			gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP); // do not change stencil values
-			gl.colorMask(1,1,1,1); //  restore color mask
+			gl.colorMask(1,1,1,1); // restore color mask
 			gl.enable(gl.DEPTH_TEST); // enable depth test
 
 			// reflected teapot

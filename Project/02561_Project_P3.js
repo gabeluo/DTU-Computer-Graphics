@@ -242,7 +242,7 @@ window.onload = function init()
 			// reflected teapot
 			drawTeapot(true);
 
-			gl.disable(gl.STENCIL_TEST)
+			gl.disable(gl.STENCIL_TEST);
 
 			// draw table
 			drawTable(true);
