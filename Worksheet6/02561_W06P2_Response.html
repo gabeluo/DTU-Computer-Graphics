@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02561_W06P2_Response</title>
+</head>
+<body>
+    <h1>Explain the effect of the different filtering modes and their influence on texture magnification and minification issues.</h1>
+    <h2>Nearest</h2>
+    The nearest filtering mode will consider the nearest neighbours of the pixel in question to determine the colour of the pixel.
+    <br><br>
+    <b>Magnification</b><br>
+    Can create an aliasing/staircase effect which makes edges look jagged
+    <br><br>
+    <b>Minification</b><br>
+    Aliasing effect, the geometry/pattern can be look distorted
+    <br><br>
+    <h2>Linear</h2>
+    Considers the nearby pixels and linearly interpolates to get an value for the pixel in question
+    <br><br>
+    <b>Magnification</b><br>
+    Replaces issue of aliasing by making the edges blurred due to the averaging, making it look smoother
+    <br><br>
+    <b>Minification</b><br>
+    Reduces the effect of aliasing seen with the nearest filtering mode by adding a blur, making it look smoother
+    The overall pattern still appears distorted, and the effect from the linear filtering mode is less apparent the further away the object is.
+    Overall the effect of using linear filtering for minification issues minimal.
+    <br><br>
+    <h2>Mipmap (Minification Only)</h2>
+    Can be used when the texture has as resolution that is a power of two, and when the mipmap is generate the program will create an array of textures
+    with decreasing resolution, each level being half the previous level. When rendering WebGL will use the texture resolution that best matches the number of texels covered by a pixel.
+    <br>
+    The jaggedness is significantly smoothed out, and the specific type of texture mipmapping can produced slightly varired results, but all will be smoother than only applying the linear or nearest filtering mode.
+    Note that pixels very far away will end up showing a singular colour because they are so small even if the original texture has a complicated pattern.
+    For the checkerboard the far pixels are coloured grey.
+</body>
+</html>

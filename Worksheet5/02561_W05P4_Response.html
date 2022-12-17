@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02561_W05P4_Response</title>
+</head>
+<body>
+    <h1>Explain how you obtain and use surface normals, and explain how this relates to the surface smoothness when you are rendering a triangle mesh.</h1>
+    <p>
+      For these obj files the surface normals were simply obtained from the obj file itself. Those normals were put in by the original program
+      used the generate the model, whether it be blender, SolidWorks, etc. the OBJ parser program reads through the obj file and like the 
+      vertices puts them in the respective buffer in the JavaScript code.
+      <br><br>
+      The surface normals are used to compute the Phong shading and lighting effects on the object. They can also be used as
+      texture coordinates for example if a texture was applied to the model.
+      <br><br>
+      The number of surface normals would determine how smooth the surface looks when rendering a triangle mesh
+      The less normals, the more jagged the model will appear. This comparable to creating a sphere, where using 1 subdivision will
+      give a much more jagged and rough surface compared to one with 5 subdivisions, which has many more surface normals.
+    </p>
+
+</body>
+</html>

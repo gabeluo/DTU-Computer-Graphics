@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02561_W07P2_Response</title>
+</head>
+<body>
+    <h1>Explain the transformation.</h1>
+    <p>
+      The purpose of the transformation is to change from normalized device coordinates into world space. The projection poriton is reversed by multiplying by the inverse of the projection matrix.
+      This converts from the normalized device coordinates into camera space.<br>
+      For the view matrix, only the rotational component should be modified, so the last row and column of the inverse of the view matrix are set to zero
+      to reverse the effect from the view matrix, essentially going from camera space to world space.<br>
+      The two inverse matrices are multiplied together and used as a transformation matrix on the vertex positions.
+    </p>
+</body>
+</html>

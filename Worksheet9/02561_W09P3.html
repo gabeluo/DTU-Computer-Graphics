@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02561_W09P3</title>
+</head>
+<body>
+    <h1>Compare projection shadows to shadow mapping by listing advantages and disadvantages of the two techniques.</h1>
+    <h2>Projection Shadows</h2>
+    <p>
+        Pros:
+        <br>
+        Quick and easy to implement
+    </p>
+    <p>
+        Cons:
+        <br>
+        Doesn't show any self-shadowing
+        <br>
+        More inefficient with multiple objects as each object needs to have its own shadow drawn as a separate object
+        <br>
+        Difficult to implement with more complex shapes (consider how adding alpha blending with a teapot will not work)
+    </p>
+    <h2>Shadow Mapping</h2>
+    <p>
+        Pros:
+        <br>
+        Allows for self-shadowing (consider the little nub at the top of the teapot)
+        <br>
+        Doesn't require clipping of the shadow
+    </p>
+    <p>
+        Cons:
+        <br>
+        Quality is determined by the resolution of the shadow map
+        <br>
+        Aliasing problems (staircase effect at the edge of the shadows)
+        <br>
+        Can be harder to implement as it takes time to find the proper projection and view matrices for the light source
+        <br>
+        Unwanted effects or improper shadows can occur if the shadow map precision isn't very high
+    </p>
+</body>
+</html>

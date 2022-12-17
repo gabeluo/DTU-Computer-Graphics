@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>02561_W04P6</title>
+</head>
+<body>
+    <h2>a) What is the difference between Phong shading and Phong lighting (the Phong reflection model)?</h2>
+    <p>
+        The Phong lighting model consider the surface point, the light, and where the viewer is looking from to calculate how much light would
+        be reflected to the viewer based on the material of the object. The Phong lighting models consider ambient, diffuse, and specular
+        components of the interaction between material and light.
+        <br><br>
+        The Phong shading model improves on the Gouraud shading model where the surface normal is renormalized at each pixel. The Phong shading model
+        determines the colouring of the model based on its shape and the illumination model used. The Phong shading model will evaluate the lighting model
+        (which can be the Phong lighting model) at every pixel (by moving the calculations to the fragment shader) and uses the results as the color for the pixel.
+        <br><br>
+        Simply put, the shading model is used to determine how the lighting model is implemented, while the Phong lighting model determines the effects between the light and material.
+    </p>
+    <h2>b) What is the difference between flat shading, Gouraud shading, and Phong
+        shading? List pros and cons of each. Is Gouraud or Phong shading the
+        best method for simulating highlights? Explain.</h2>
+    <p>
+        <b>Flat shading</b>
+        <br>
+        Evaluates the illumination model once per face, showing the differences in shading from the polygons in the mesh.
+        <br>
+        <i>Pros:</i><br>Simple and fast
+        <br>
+        <i>Cons:</i><br>Requires a model with lots of small faces to get a relatively good effect. In most cases, the lighting effect is ruined
+        because the different faces can be distinguished based on the different shading calculations. In other words, the polygon boundaries are easily visible.
+        Flat shading is especially bad used on smooth surfaces as Mach bands will be visible.
+        <br><br>
+        <b>Gouraud shading</b>
+        <br>
+        Only evaluates the illumination model at the vertices
+        <br>
+        <i>Pros:</i><br>Achieves smooth shading compared to flat shading through the use of interpolation, which removes the visible edges between polygons seen with flat shading
+        <br>
+        <i>Cons:</i><br>Mach bands can still appear<br>The edges between the different polygons can still be visible from the specular highlight, so overall it isn't great with specular reflections
+        <br><br>
+        <b>Phong Shading</b>
+        <br>
+        Interpolates normals across the polygon to do individuals calculations at each pixel
+        <br>
+        <i>Pros:</i><br>Creates a much smoother and more accurate result
+        <br>
+        Removes Mach bands
+        <br>
+        Highlights are significantly improved
+        <br>
+        <i>Cons:</i><br>Adds complexity and requires more calculations due to all the interpolations and normalizations, thus increasing computational costs
+        <br><br>
+        The Phong shading would be the best method for simulating highlights since it re-nomalizes the direction vectors per pixel
+        to compensate for the linear interpolation which shortens the direction vector which is done for Gouraud shading.
+        This means that objects with less smooth surfaces will show a better effect in simulating highlights when Phong is used instead of Gouraud.
+    </p>
+    <h2>c) What is the difference between a directional light and a point light?</h2>
+    <p>
+        A directional light doesn't have a position and goes in one direction. The w coordinate is also set to 0.
+        <br><br>
+        A point light has a designated position and the light direction radiates outwards from the light's position.
+        The w coordinate is also set to 1. The intensity of the point source is inversely proportional to the distance from the source to the surface in question
+    </p>
+    <h2>d) Does the eye position influence the shading of an object in any way?</h2>
+    <p>
+        When considering the slides on the various shading methods, none of the methods consider the eye position as a factor when rendering shading.
+        The light position is considered for a point light, but not the eye position. Hence, the eye position does not influence the shading of an object.
+    </p>
+    <h2>e) What is the effect of setting the specular term to (0, 0, 0)?</h2>
+    <p>
+        Setting the specular term to (0, 0, 0) removes the specular highlight from the light completely, essentially removing the shiny component of the object.
+        The highlight can also be described as the mirror-like effect from the light that would appear on a shiny object, so in this case this effect wouldn't be shown.
+    </p>
+    <h2>f) What is the effect of increasing the shininess exponent (𝛼)?</h2>
+    <p>
+        Increasing the shininess exponent attempts to make the object looks "shinier". In the case of the sphere, increasing the shininess makes the
+        white dot/highlight from the shine in a more concentrated area (the specular highlight is smaller). Decreasing the shininess makes the highlight cover a larger area and 
+        essentially makes it look more diffused.
+    </p>
+    <h2>g) In what coordinate space did you compute the lighting?</h2>
+    <p>The lighting was computed in world space, not in view space.</p>
+
+</body>
+</html>
