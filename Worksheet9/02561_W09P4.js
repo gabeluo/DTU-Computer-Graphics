@@ -35,6 +35,7 @@ window.onload = function init()
 	// create the shadow map
 	gl.useProgram(shadowProgram);
 	var fbo = initFramebufferObject(gl, 2048, 2048);
+	var texMapScale = vec2(1.0/fbo.width, 1.0/fbo.height);
 	var shadowModel = initObject(gl, "./teapot/teapot.obj", 0.25, shadowProgram);
 
 	var shadowPerspectiveMatrixLoc = gl.getUniformLocation(shadowProgram,"u_Perspective");
@@ -71,6 +72,7 @@ window.onload = function init()
 	var teapotModelMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Model");
 	var teapotLightViewMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Light_View");
 	var teapotLightPerspectiveMatrixLoc = gl.getUniformLocation(teapotProgram,"u_Light_Perspective");
+	var teapottexMapScaleLoc = gl.getUniformLocation(teapotProgram,"texmapscale");
 
 	// marble background rectangle
 	gl.useProgram(tableProgram);
@@ -127,6 +129,7 @@ window.onload = function init()
 	var tableLightViewMatrixLoc = gl.getUniformLocation(tableProgram,"u_Light_View");
 	var tableLightPerspectiveMatrixLoc = gl.getUniformLocation(tableProgram,"u_Light_Perspective");
 	var tableAmbientIntensityLoc = gl.getUniformLocation(tableProgram,"u_ambientIntensity");
+	var tabletexMapScaleLoc = gl.getUniformLocation(tableProgram,"texmapscale");
 
 	// event listeners
 	toggleRotation.addEventListener("click", function (ev) {
@@ -225,6 +228,7 @@ window.onload = function init()
 			gl.uniformMatrix4fv(tableLightPerspectiveMatrixLoc, false, flatten(lightP));
 			gl.uniformMatrix4fv(tablePerspectiveMatrixLoc, false, flatten(P));
 			gl.uniform1f(tableAmbientIntensityLoc, ambientIntensity);
+			gl.uniform2fv(tabletexMapScaleLoc, texMapScale);
 			gl.uniform1i(gl.getUniformLocation(tableProgram, "shadowMap"), 0);
 			gl.uniform1i(gl.getUniformLocation(tableProgram, "marbletexMap"), 1);
 			gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -249,6 +253,7 @@ window.onload = function init()
 			gl.uniformMatrix4fv(teapotModelMatrixLoc, false, flatten(modelMatrix));
 			gl.uniformMatrix3fv(teapotNormalMatrixLoc, false, flatten(N));
 			gl.uniform1i(gl.getUniformLocation(teapotProgram, "shadowMap"), 0);
+			gl.uniform2fv(teapottexMapScaleLoc, texMapScale);
 			gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_SHORT, 0);
 		}
 	}
