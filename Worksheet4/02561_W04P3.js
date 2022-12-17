@@ -74,7 +74,7 @@ window.onload = function init()
 	function animate() {
 		cameraPosition = vec3(cameraRadius*Math.sin(cameraAlpha), 0, cameraRadius*Math.cos(cameraAlpha));
 		if (rotate)
-			cameraAlpha += 0.055;
+			cameraAlpha += 0.04;
 		V = lookAt(cameraPosition, vec3(0, 0, 0), vec3(0, 1, 0));
 		gl.uniformMatrix4fv(viewMatrix, false, flatten(V));
 		render(gl);

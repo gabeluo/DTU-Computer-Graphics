@@ -38,7 +38,6 @@ window.onload = function init()
 	var perspectiveMatrix = gl.getUniformLocation(gl.program,"u_Perspective");
 	gl.uniformMatrix4fv(perspectiveMatrix, false, flatten(P));
 
-	
 	incrementSubd.addEventListener("click", function (ev) {
 		numSubdivs++;
 		pointsArray = [];

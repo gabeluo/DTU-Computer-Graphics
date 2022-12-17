@@ -20,7 +20,6 @@ window.onload = function init()
 	
 	gl.enable(gl.DEPTH_TEST);
 	gl.enable(gl.CULL_FACE);
-	//gl.frontFace(gl.CW)
 		
 	gl.program = initShaders(gl, "vertex-shader", "fragment-shader");
 	gl.useProgram(gl.program);
